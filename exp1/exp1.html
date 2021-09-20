@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+    <html> 
+      <head> 
+            <meta charset="utf-8"> 
+            <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
+            <title>可视化实验1</title> 
+            <script type="text/javascript" src="d3.parsets.js"></script>
+      </head>
+      <style>
+        .axis path,
+        .axis line{
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+        
+        .axis text {
+            font-family: sans-serif;
+            font-size: 18px;
+        }
+      </style>
+      <style type="text/css">
+        @import"d3.parsets.css";
+      </style>
+      <body>
+        <h1>1.bar chart</h1>
+        <script>
+          //设置画布
+          var width = 800
+          var height = 450
+          var svg1 = d3.select('body')
+                      .append('svg')
+                      .attr('width',width)
+                      .attr('height',height)
+          //设置柱形图数据集
+          var dataset1 = [180,179,510,862]//柱形图数据集
+          var dataset2 = [145,106,196,23]
+          var maxx = Math.max(d3.max(dataset2),d3.max(dataset1))
+
+          //柱状图比例尺
+          var linear = d3.scale.linear().domain([0, maxx]).range([0,400])
+          //x轴的比例尺
+          var xScale = d3.scale.ordinal()
+              .domain(['0','first','second','third','crew'])
+              .range([60,130,210,290,370,450])
+          //y轴的比例尺
+          var yScale = d3.scale.linear()
+              .domain([0,maxx])
+              .range([400, 0]);
+          //定义x轴
+          var xAxis = d3.svg.axis()
+              .scale(xScale)
+              .orient("bottom")
+          //定义y轴
+          var yAxis = d3.svg.axis()
+              .scale(yScale)
+              .orient("left");
+          //添加x轴
+          svg1.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + 0 + "," + (height-30) + ")")
+            .call(xAxis); 
+          //添加y轴
+          svg1.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + 60 + "," + 20 + ")")
+            .call(yAxis);
+
+          //设置柱形图元素
+          var rectWidth =30
+          var rec1 = svg1.selectAll("rect1")
+                          .data(dataset1)
+                          .enter()//选中只有数据没有元素的部分
+                          .append('rect')//由于没有元素所以要添加元素
+                          .attr('fill','steelblue')//设置颜色
+                          .attr('x',(d,i)=>i*(rectWidth + 50)+100)//设置横坐标,+3是设置柱形图之间的间隙
+                          .attr('y',(d)=>height-linear(d)-30)//反转
+                          .attr('width',rectWidth)
+                          .attr('height',(d)=>linear(d))
+          var rec2 = svg1.selectAll("rect2")
+                          .data(dataset2)
+                          .enter()//选中只有数据没有元素的部分
+                          .append('rect')//由于没有元素所以要添加元素
+                          .attr('fill','red')//设置颜色
+                          .attr('x',(d,i)=>i*(rectWidth + 50)+130)//设置横坐标,+3是设置柱形图之间的间隙
+                          .attr('y',(d)=>height-linear(d)-30)//反转
+                          .attr('width',rectWidth)
+                          .attr('height',(d)=>linear(d))
+        //注释
+        svg1.append("rect")
+                .attr("x",450)
+                .attr("y",10)
+                .attr("width",25)
+                .attr("height",25)
+                .attr("fill","steelblue")
+        svg1.append("rect")
+                .attr("x",450)
+                .attr("y",60)
+                .attr("width",25)
+                .attr("height",25)
+                .attr("fill","red")
+        svg1.append("g")
+                .append('text')
+                .attr("x",480)
+                .attr("y",28)
+                .style('font-weight', 800)
+                .style('font-family', 'Arial')
+                .style('fill', 'black')
+                .text("male")
+        svg1.append("g")
+                .append('text')
+                .attr("x",480)
+                .attr("y",78)
+                .style('font-weight', 800)
+                .style('font-family', 'Arial')
+                .style('fill', 'black')
+                .text("famale")
+          //添加文字元素
+        var text1 = svg1.selectAll("t1")
+                .data(dataset1)
+                .enter()
+                .append("text")
+                .attr("transform","translate(" + 0 + "," + -20 + ")")
+                .attr("x", (d,i)=>i*(rectWidth+50)+90 )
+                .attr("y",function(d){
+                    return height-linear(d)-30;
+                })
+                .attr("dx",function(){
+                    return 10;
+                })
+                .attr("dy",function(d){
+                    return 20;
+                })
+                .text(function(d){
+                    return d;
+                })			
+        var text2 = svg1.selectAll("t2")
+                  .data(dataset2)
+                  .enter()
+                  .append("text")
+                  .attr("transform","translate(" + 30 + "," + -20 + ")")
+                  .attr("x", (d,i)=>i*(rectWidth+50)+90 )
+                  .attr("y",function(d){
+                      return height-linear(d)-30;
+                  })
+                  .attr("dx",function(){
+                      return 10;
+                  })
+                  .attr("dy",function(d){
+                      return 20;
+                  })
+                  .text(function(d){
+                      return d;
+                  })	
+        </script>
+        <h1>2.parallel set</h1>
+        <script>
+              var svg2 = d3.select('body')
+                          .append('svg')
+                          .attr('width',800)
+                          .attr('height',650)
+              var dataset3 = []
+              for(i=0;i<145;i++){
+                dataset3.push({class:"first",sex:"female"});
+              }
+              for(i=0;i<180;i++){
+                dataset3.push({class:"first",sex:"male"});
+              }
+              for(i=0;i<106;i++){
+                dataset3.push({class:"second",sex:"female"});
+              }
+              for(i=0;i<179;i++){
+                dataset3.push({class:"second",sex:"male"});
+              }
+              for(i=0;i<196;i++){
+                dataset3.push({class:"third",sex:"female"});
+              }
+              for(i=0;i<510;i++){
+                dataset3.push({class:"third",sex:"male"});
+              }
+              for(i=0;i<23;i++){
+                dataset3.push({class:"crew",sex:"female"});
+              }
+              for(i=0;i<862;i++){
+                dataset3.push({class:"crew",sex:"male"});
+              }
+              var chart = d3.parsets()
+                          .width(600)
+                          .tension(0.5)
+                          //.dimensions(["class","sex"])
+              svg2.datum(dataset3).call(chart)
+        </script>
+        <h1>3.pie</h1>
+        <script src="http://d3js.org/d3.v4.js" charset="utf-8"></script> 
+        <script>
+          //声明margin,半径的大小,颜色
+          var margin = {top: 20, right: 20, bottom: 20, left: 20},
+          width = 600 - margin.right - margin.left,
+          height = 600 - margin.top - margin.bottom,
+          radius = width/3;
+
+          var color3 = d3.scaleOrdinal()
+              .range(["#64B5F6","#1E88E5","#99FF99","#008800","#FFBB66","#CC6600","#FF77FF","#990099"]);
+          
+          //生成弧度生成器-src generator
+          var arc = d3.arc()
+              .outerRadius( radius)
+              .innerRadius(0);
+
+          var labelArc = d3.arc()
+              .outerRadius(radius + 50)
+              .innerRadius(radius - 50)
+
+          //声明饼图生成器
+          var pie = d3.pie()
+              .sort(null)
+              .value(function(d) { 
+              //console.log(d[1]);
+              return d[1]; });
+
+          //定义画布 define svg
+          var svg3 = d3.select("body")
+              .append("svg")
+              .attr("width",width)
+              .attr("height",height)
+              .append("g")
+              .attr("transform","translate("+ width/2 +"," + height/2 +")");
+          
+          //装入数据
+          var data3 = [['first:female',145],['first:male',180],['second:female',106],['second:male',179],['third:female',196],['third:male',510],['crew:female',23],['crew:male',862]];
+          //append g elements (arc) 相当于给g元素添加类属性
+          var g3 = svg3.selectAll(".arc")
+                      .data(pie(data3))
+                      .enter().append("g")
+                      .attr("class","arc");
+          //给arc添加通道path-相当于填充颜色并且给与动作，pieTween函数就是产生动作的函数
+          g3.append("path")
+              .attr("d",arc)
+              .style("fill",function(d) {
+                  return color3(d.data[0]);
+              })
+              .transition()
+              .ease(d3.easeLinear)
+              .duration(2000)
+              .attrTween("d",pieTween);
+          //添加文字- 以圆为中心进行位置的寻找并且显示文字
+          g3.append("text")
+              .transition()
+              .ease(d3.easeLinear)
+              .duration(2000)
+              .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) +")"; })
+              .attr("dx",-40)
+              .attr("dy",".35em")
+              .text(function(d){ 
+              console.log(d);
+              return d.data[0]+"("+d.data[1]+")";});
+          //产生动画效果部分
+          function pieTween(b){
+              b.innerRadius = 0;
+              var i = d3.interpolate({startAngle:0,endAngle:0},b);
+              return function(t) {return arc(i(t));};
+        }
+
+          //第二张图
+          var color4 = d3.scaleOrdinal()
+              .range(["#FFAA33","#FF8800","#EE7700","#CC6600","#5599FF","#0066FF","#0044BB","#003C9D"]);
+
+                      //定义画布 define svg
+          var svg4 = d3.select("body")
+              .append("svg")
+              .attr("width",width)
+              .attr("height",height)
+              .append("g")
+              .attr("transform","translate("+ width/2 +"," + height/2 +")");
+          
+          //装入数据
+          var data4 = [['female:first',145],['female:second',106],['female:third',196],['female:crew',23],['male:first',180],['male:second',179],['male:third',510],['male:crew',862]];
+          //append g elements (arc) 相当于给g元素添加类属性
+          var g4 = svg4.selectAll(".arc")
+                      .data(pie(data4))
+                      .enter().append("g")
+                      .attr("class","arc");
+          //给arc添加通道path-相当于填充颜色并且给与动作，pieTween函数就是产生动作的函数
+          g4.append("path")
+              .attr("d",arc)
+              .style("fill",function(d) {
+                  return color4(d.data[0]);
+              })
+              .transition()
+              .ease(d3.easeLinear)
+              .duration(2000)
+              .attrTween("d",pieTween);
+          //添加文字- 以圆为中心进行位置的寻找并且显示文字
+          g4.append("text")
+              .transition()
+              .ease(d3.easeLinear)
+              .duration(2000)
+              .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) +")"; })
+              .attr("dx",-40)
+              .attr("dy",".35em")
+              .text(function(d){ 
+              console.log(d);
+              return d.data[0]+"("+d.data[1]+")";});
+      </script>
+      </body> 
+    </html>

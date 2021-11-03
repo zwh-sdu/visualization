@@ -1,0 +1,8 @@
+1，用RT算法实现radial tree layout，提交代码和测试用例，这周日24交
+2,   了解d3实现的squaried treemap layout算法，不需要提交
+
+https://dl.acm.org/doi/pdf/10.5555/1273749.1273751
+https://llimllib.github.io/pymag-trees/
+
+中文解读 https://www.cnblogs.com/zhongzihao/p/8976675.html
+更完整的解读 https://www.shangmayuan.com/a/29fdbc439fb74a058a9d2a8a.html

@@ -1,0 +1,5 @@
+1， 体验https://projector.tensorflow.org/
+ 
+2， 用https://lvdmaaten.github.io/drtoolbox/, 比较t-sne pca, isomap等方法的区别
+
+数据可以到这里下载 https://archive.ics.uci.edu/ml/datasets.php

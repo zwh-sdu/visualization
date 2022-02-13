@@ -1,0 +1,4 @@
+实验课作业：
+ 阅读https://jheer.github.io/barnes-hut/，理解force-directed layout的算法，
+构建用例跑一下d3的fore-directed layout
+https://github.com/d3/d3-force

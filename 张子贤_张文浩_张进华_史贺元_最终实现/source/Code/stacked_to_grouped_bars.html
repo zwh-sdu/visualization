@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+
+<meta charset="utf-8">
+
+<form>
+  <label><input type="radio" name="mode" value="grouped" style="zoom:1.5;"> Grouped</label>
+  <label><input type="radio" name="mode" value="stacked" style="zoom:1.5;" checked> Stacked</label>
+</form>
+<svg width="960" height="500"></svg>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<style>
+  .hidden {
+    fill: lavender !important;
+  }
+
+  .axis path,
+  .axis line {
+    fill: none;
+    stroke: orange;
+    stroke-width: 4px;
+    shape-rendering: crispEdges;
+  }
+
+  .axis text {
+    font-family: sans-serif;
+    font-size: 17px;
+    fill: black;
+  }
+</style>
+<script>
+
+  var n = 3, // 组内元素数
+    m = 12; // 分组个数
+
+  // 数据集
+  var dataset = [[0.49737, 0.12594, 0.11364, 0.38853, 0.59433, 0.3889, 0.57292, 0.6123, 0.17843, 0.7803, 0.968, 0.13891, 0.33471, 0.18206],
+  [0.26435, 0.2115, 0.4751, 0.19405, 0.278, 0.34047, 0.33263, 0.1904, 0.7249, 0.5829, 0.1237, 0.4103],
+  [0.6828, 0.9865, 0.8512, 0.17502, 0.123, 0.7913, 0.13754, 0.11655, 0.4656, 0.973, 0.143, 0.3376]]
+
+  // 存储d3.range(m)返回的数组，内容为从0-m，代表x轴展示的值
+  var x_range = d3.range(m);
+  // console.log("x_range = " + x_range);
+
+  // 柱状图数据
+  // 存储n*m的矩阵，n表示组内元素数，m表示分组个数
+  var y_bar_data = dataset;
+  // console.log("y_bar_data = " + y_bar_data);
+  // 获取y_bar_data矩阵中的最大值
+  var y_bar_max = d3.max(y_bar_data, function (y) { return d3.max(y); });
+  // console.log("y_bar_max = " + y_bar_max);
+
+  // 堆栈图数据
+  // 返回一个主键为0-3的堆栈生成器函数
+  var y_stack_data = d3.stack().keys(d3.range(n))(d3.transpose(y_bar_data));
+  // console.log("y_stack_data = " + y_stack_data);
+  // 获取y_stack_data矩阵中的最大值
+  var y_stack_max = d3.max(y_stack_data, function (y) { return d3.max(y, function (d) { return d[1]; }); });
+  // console.log("y_stack_max = " + y_stack_max);
+
+  // 获取svg元素
+  var svg = d3.select("svg"),
+    // 定义外边距
+    margin = { top: 20, right: 0, bottom: 50, left: 30 },
+    width = +svg.attr("width") - margin.left - margin.right,
+    height = +svg.attr("height") - margin.top - margin.bottom,
+    // 定义g元素，并将其定位
+    g = svg.append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+
+  // 平台属性
+  var platform = ["Wii", "NES", "GB", "DS", "X360", "PS3", "PS2", "SNES", "GBA", "3DS", "PS4", "N64"];
+
+  // 定义x轴比例尺函数
+  var x = d3.scaleBand()
+    // 指定定义域
+    .domain(x_range)
+    // 指定值域
+    .range([0, width])
+    // 设置填充
+    .padding(0.08);
+
+  var x_scale = d3.scaleOrdinal()
+    // 指定定义域
+    .domain(platform)
+    // 指定值域
+    .range([125, 205, 280, 355, 435, 510, 587, 665, 740, 820, 895, 970])
+
+  var x_axis = d3.axisBottom()
+    .scale(x_scale)  //  绑定比例尺
+    .ticks(12);  // 指定刻度数量
+
+  // 定义y轴比例尺函数
+  var y = d3.scaleLinear()
+    // 指定定义域
+    .domain([0, y_stack_max])
+    // 指定值域
+    .range([height, 0]);
+
+  // 定义y轴比例尺函数
+  var y_scale = d3.scaleLinear()
+    // 指定定义域
+    .domain([0, 100])
+    // 指定值域
+    .range([height, 0]);
+
+  // 绘制y轴标签
+  var y_axis = d3.axisLeft()
+    .scale(y_scale)
+    .ticks(10);
+
+  svg.append("g")
+    .attr("class", "axis")
+    .attr("transform", "translate(-55,455)") // 平移操作，2个参数，第一个参数是向右平移的像素，第二个是向下平移的像素。
+    .call(x_axis);
+
+  svg.append("g")
+    .attr("class", "axis")
+    .attr("transform", "translate(35,20)") // 平移操作，2个参数，第一个参数是向右平移的像素，第二个是向下平移的像素。
+    .call(y_axis);
+
+  // // 绘制x轴标签 方法2
+  // svg.selectAll()
+  //         .data(platform)
+  //         .enter()
+  //         .append("text")
+  //         .attr("font-size",17)
+  //         .attr("transform","translate(" + -25 + "," + 466+ ")")
+  //         .attr("x", (d,i)=>i*(78) + 70)
+  //         .text(function(d){
+  //           return d;
+  //         })
+
+  //设置颜色的比例尺
+  var color = d3.scaleOrdinal()
+    // 指定颜色函数的定义域，可以看出，通过系列的索引来计算不同的颜色
+    .domain(d3.range(n))
+    // 指定颜色函数的值域
+    .range(["#68c4a8", "#c3ff0e", "#f6f185"]);
+
+  // 定义堆栈图的元素
+  var series = g.selectAll(".series")
+    // 绑定堆栈数据
+    .data(y_stack_data)
+    .enter().append("g")
+    // 根据系列索引，定义填充色
+    .attr("fill", function (d, i) { return color(i); });
+
+  // 定义柱状图的元素
+  var rect = series.selectAll("rect")
+    // 为柱状图绑定数据
+    .data(function (d) { return d; })
+    .enter().append("rect")
+    // 每个矩形柱子的横坐标通过上面定义的x()比例尺函数来计算
+    .attr("x", function (d, i) { return x(i); })
+    .attr("y", height)
+    // 设置矩形条的宽度为上文中定义的x比例尺的刻度宽度
+    .attr("width", x.bandwidth())
+    // 设置矩形条的初始高度为0
+    .attr("height", 0)
+    .on("click", click)
+    .on("dblclick", function () {
+      // series.selectAll("rect").classed("hidden",false)
+      window.top.postMessage(-1, '*');
+    })
+
+  function click(d, i) {
+    // series.selectAll("rect").classed("hidden", function (_, key) {
+    //   return key!=i; 
+    // });
+    window.top.postMessage(i, '*');
+  }
+
+  function receiveMessage(e) {
+    if (e.data == -1) {
+      series.selectAll("rect").classed("hidden", false)
+    }
+    else {
+      series.selectAll("rect").classed("hidden", function (d, i) {
+        return e.data != i;
+      })
+    }
+  }
+  window.addEventListener("message", receiveMessage, false);
+
+  // 为矩形条柱添加过渡动画
+  rect.transition()
+    // 动画的延迟时间
+    .delay(function (d, i) { return i * 10; })
+    // 通过比例尺函数y,计算动作终点时y属性的值
+    .attr("y", function (d) { return y(d[1]); })
+    // 通过比例尺函数y,计算动作终点时height属性的值
+    .attr("height", function (d) { return y(d[0]) - y(d[1]); });
+
+
+  //图例数组，格式可自定义
+  var data_legend = [
+    {
+      "name": "NA",
+      "color": "#68c4a8"
+    },
+    {
+      "name": "EU",
+      "color": "#c3ff0e"
+    },
+    {
+      "name": "JP",
+      "color": "#f6f185"
+    }
+  ];
+
+  //初始化图例，将data_legend与图例绑定
+  var legend = svg.selectAll(".legend")
+    .data(data_legend)
+    .enter().append("g")
+    .attr("class", "legend")
+    .attr("transform", function (d, i) { return "translate(-30," + (i * 20 + 10) + ")"; });  //transform属性便是整个图例的坐标
+
+  //绘制文字后方的颜色框或线
+  legend.append("rect")
+    .attr("x", width + 25) //width是svg的宽度，x属性用来调整位置
+    // .attr("x", (width / 160) * 157)
+    //或者可以用width的分数来表示，更稳定一些，这是我试出来的，下面同
+    .attr("y", 8)
+    .attr("width", 40)
+    .attr("height", 10) //设低一些就是线，高一些就是面，很好理解
+    .style("fill", function (d) {
+      return d.color
+    });
+
+  //绘制图例文字
+  legend.append("text")
+    .attr("x", width + 10)
+    // .attr("x", (width / 40) * 39)
+    .attr("y", 15)
+    .style("text-anchor", "end") //样式对齐
+    .attr("font-size", 20)
+    .text(function (d) {
+      return d.name;
+    });
+
+
+  // 定义一个input元素，为其绑定change事件监听，用来切换 堆栈图和簇状图
+  d3.selectAll("input")
+    .on("change", changed);
+
+  //定义一个定时器，在第一次执行完时停止。类似js的setTimeout()
+  var timeout = d3.timeout(function () {
+    d3.select("input[value=\"grouped\"]")
+      // D3中通过property在设置一些特殊的html元素的属性
+      // 因此这里的checked属性通过property来设置
+      .property("checked", true)
+      // 为input元素绑定一个自定义的事件change
+      .dispatch("change");
+  }, 1000);
+
+  // 切换堆栈图和簇状图
+  function changed() {
+    // 停止当前定时器，防止后续的回调函数的执行
+    timeout.stop();
+
+    if (this.value === "grouped") transitionGrouped();
+    else transitionStacked();
+  }
+
+  // 切换为簇状图
+  function transitionGrouped() {
+    // 定义y的定义域
+    y.domain([0, y_bar_max]);
+
+    // 为转换为簇状图添加过渡动画
+    rect.transition()
+      .duration(500)
+      .delay(function (d, i) { return i * 10; })
+      // 计算每个矩形条柱的x位置
+      .attr("x", function (d, i) { return x(i) + x.bandwidth() / n * this.parentNode.__data__.key; })
+      // 设置矩形条柱的宽度，由于簇状图一组n个系列，因此计算矩形的宽度要除以n
+      .attr("width", x.bandwidth() / n)
+      .transition()
+      // 设置矩形条柱的y位置
+      .attr("y", function (d) { return y(d[1] - d[0]); })
+      // 设置矩形条柱的高度
+      .attr("height", function (d) { return y(0) - y(d[1] - d[0]); });
+  }
+
+  // 切换为堆栈图
+  function transitionStacked() {
+    // 切换y的定义域
+    y.domain([0, y_stack_max]);
+
+    // 为转换为堆栈图添加过渡动画
+    rect.transition()
+      // 设置动画的持续时长
+      .duration(500)
+      // 设置动画的延迟时间
+      .delay(function (d, i) { return i * 10; })
+      // 设置矩形条柱的y位置
+      .attr("y", function (d) { return y(d[1]); })
+      // 设置矩形条柱的高度
+      .attr("height", function (d) { return y(d[0]) - y(d[1]); })
+      .transition()
+      // 设置动画结束时矩形条需要达到的x的位置
+      .attr("x", function (d, i) { return x(i); })
+      // 设置动画结束时矩形条需要达到的宽度
+      .attr("width", x.bandwidth());
+  }
+
+</script>
+
+</html>

@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+
+    <style>
+        .hidden{
+            fill: lavender !important;
+        }
+
+        rect.bordered {
+            stroke: #fd9901;
+            stroke-width:1px;
+        }
+
+        text.mono {
+            font-size: 9pt;
+            font-family: Consolas, courier;
+            fill: #000;
+        }
+
+        text.axis-workweek {
+            fill: #000;
+        }
+
+        text.axis-worktime {
+            fill: #000;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript" src="//cdn.bootcss.com/d3/3.2.2/d3.v3.min.js"></script>
+<script>
+
+    var width = 960,height = 1000,
+        radius = height / 4;
+
+    var arc = d3.svg.arc()
+        .innerRadius(45)
+        .outerRadius(radius);
+
+    var pie = d3.layout.pie();
+    var gridSize = Math.floor(width / 12),    // 求地板，即去掉小数部分，width分成24份
+        legendElementWidth = gridSize;    // 底下长条的长度，是格子边长的两倍
+    var color = d3.scale.category20();
+    var buckets = 9;       // 一共9种颜色级别
+    var colors = ["#ffffd9","#edf8b1","#c7e9b4","#7fcdbb","#41b6c4","#1d91c0","#225ea8","#253494","#081d58"];
+    var myColor = ["rgba(253,153,1,0.65)","rgba(140,253,1,0.46)","rgb(1,60,253)","#fd0159",
+                    "rgba(161,1,253,0.31)","rgba(253,1,60,0.73)","#7b01fd","#019cfd",
+                    "#40fd01","rgb(253,232,1)","rgb(253,127,1)","#fd1601"]
+    var red = [173.27,407.74,649.95,1039.93,1483.98,2210.74,3000.61,3839.74,4753.57,5779.77,7089.01,8811.85];
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + (width / 2 + 200 ) + "," + height / 2 + ")");
+
+    var str = "每个大扇形是每种游戏类型在所有年份所有地区总销售量的对比/ 大扇形中的小圆是该类型的游戏在三个地区销量的对比/ " +
+        "小圆的扇形颜色代表销量的等级/ 点击红色的正方形会筛选出该正方形以下所有游戏类型的数据";
+
+    var strs = str.split("/") ;
+
+    var title_rect = svg.selectAll(".TitleRect")
+        .data(red)
+        .enter()
+        .append("rect")
+        .attr("class","TitleRect")
+        .attr("transform","translate(" + (-500) + "," + (-480) + ")")
+        //.attr("x", 0)
+        //.attr("y",10)
+        //矩形的宽
+        .attr("width", width)
+        .attr("height", 70)
+        .attr("fill","gray");
+
+    var title_text = svg.selectAll("TitleText")
+        .data(red)   //填充数据
+        .enter()
+        .append("text")
+        .attr('fill','white')   //设置字体颜色
+        .attr("class","TitleText")
+        .attr("transform","translate(" + (-470) + "," + (-440) + ")")
+        .attr("x", 0)
+        .attr("y",10)
+        .attr("font-size",45)
+        //.attr('text-anchor',"middle")
+        .text("每种游戏类型销售量的饼图可视化")
+
+    var description_text = svg.selectAll("DesText")
+        .data(red)   //填充数据
+        .enter()
+        .append("text")
+        .attr('fill','black')   //设置字体颜色
+        .attr("class","DesText")
+        .attr("transform","translate(" + (-470) + "," + (-400) + ")")
+        .attr("x", 0)
+        .attr("y",10)
+        .attr("font-size",25)
+
+    var texts = description_text.selectAll("tspan")
+        .data(strs)
+        .enter()
+        .append("tspan")
+        .attr("x",description_text.attr("x"))
+        .attr("dy","1em")
+        .text(function(d){return d})
+
+
+    var ii = 0;
+
+    d3.csv("../data/gen_year.csv", //function(d) {}, function(error, data) {} );
+
+        function(error, data) {
+            var alpha = 0;
+            var array_data = [], array_1980 = [], array_1990 = [], array_2000 = [], array_2010 = [], array_temp = [];
+            var colorScale = d3.scale.quantile()        // 按分位数取值，可使每个区域内元素个数相等
+                .domain([0, buckets - 1, d3.max(data, function (d) { return d.U_2000s; })])  // 定义域
+                // domain([0, n, 数据的最大值]);
+                .range(colors);    // 值域：是颜色数组，函数的返回值是代表某种颜色的字符串
+
+            for (var i = 0; i < 12; i++){
+                array_data[i] = data[i]._all;
+                array_1980[(i)*3] = data[i].U_1980s;
+                array_1980[(i)*3+1] = data[i].E_1980s;
+                array_1980[(i)*3+2] = data[i].J_1980s;
+                array_1990[(i)*3] = data[i].U_1980s;
+                array_1990[(i)*3+1] = data[i].E_1990s;
+                array_1990[(i)*3+2] = data[i].J_1990s;
+                array_2000[(i)*3] = data[i].U_2000s;
+                array_2000[(i)*3+1] = data[i].E_2000s;
+                array_2000[(i)*3+2] = data[i].J_2000s;
+                array_2010[(i)*3] = data[i].U_2010s;
+                array_2010[(i)*3+1] = data[i].E_2010s;
+                array_2010[(i)*3+2] = data[i].J_2010s;
+            }
+            svg.selectAll("path")
+                .data(pie(array_data))
+                .enter().append("path")
+                .style("fill", function(d, i) { return myColor[i]; })
+                .attr("d", arc)
+
+            for(var i = 0;i < 12;i++){
+                var arc1 = d3.svg.arc()
+                    .innerRadius(0)
+                    .outerRadius(radius / 2 *data[i]._all / red[11]);
+                array_temp[0] = array_1980[(i-ii)*3];
+                array_temp[1] = array_1980[(i-ii)*3+1];
+                array_temp[2] = array_1980[(i-ii)*3+2];
+                var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11];
+                var x_off = (radius-30)*Math.sin(theta);
+                var y_off = (radius-30)*Math.cos(theta);
+                svg.selectAll("path1")
+                    .data(pie(array_temp))
+                    .enter().append("path")
+                    .style("fill", function (d, j) {
+                        return colorScale(array_temp[j]);
+                    })
+                    .attr("d", arc1)
+                    //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; });
+                    .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                alpha = alpha + 2 * Math.PI * data[i]._all / red[11];
+            }
+            for(var i = 0;i < 12;i++){
+                var arc1 = d3.svg.arc()
+                    .innerRadius(0)
+                    .outerRadius(radius / 2 *data[i]._all / red[11]);
+                array_temp[0] = array_1990[(i-ii)*3];
+                array_temp[1] = array_1990[(i-ii)*3+1];
+                array_temp[2] = array_1990[(i-ii)*3+2];
+                var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11];
+                var x_off = (radius-80)*Math.sin(theta);
+                var y_off = (radius-80)*Math.cos(theta);
+                svg.selectAll("path2")
+                    .data(pie(array_temp))
+                    .enter().append("path")
+                    .style("fill", function (d, j) {
+                        return colorScale(array_temp[j]);
+                    })
+                    .attr("d", arc1)
+                    //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; });
+                    .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                alpha = alpha + 2 * Math.PI * data[i]._all / red[11];
+            }
+            for(var i = 0;i < 12;i++){
+                var arc1 = d3.svg.arc()
+                    .innerRadius(0)
+                    .outerRadius(radius / 2 *data[i]._all / red[11]);
+                array_temp[0] = array_2000[(i-ii)*3];
+                array_temp[1] = array_2000[(i-ii)*3+1];
+                array_temp[2] = array_2000[(i-ii)*3+2];
+                var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11];
+                var x_off = (radius-130)*Math.sin(theta);
+                var y_off = (radius-130)*Math.cos(theta);
+                svg.selectAll("path3")
+                    .data(pie(array_temp))
+                    .enter().append("path")
+                    .style("fill", function (d, j) {
+                        return colorScale(array_temp[j]);
+                    })
+                    .attr("d", arc1)
+                    //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; });
+                    .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                alpha = alpha + 2 * Math.PI * data[i]._all / red[11];
+            }
+            for(var i = 0;i < 12;i++){
+                var arc1 = d3.svg.arc()
+                    .innerRadius(0)
+                    .outerRadius(radius / 2 *data[i]._all / red[11]);
+                array_temp[0] = array_2010[(i-ii)*3];
+                array_temp[1] = array_2010[(i-ii)*3+1];
+                array_temp[2] = array_2010[(i-ii)*3+2];
+                var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11];
+                var x_off = (radius-180)*Math.sin(theta);
+                var y_off = (radius-180)*Math.cos(theta);
+                svg.selectAll("path4")
+                    .data(pie(array_temp))
+                    .enter().append("path")
+                    .style("fill", function (d, j) {
+                        return colorScale(array_temp[j]);
+                    })
+                    .attr("d", arc1)
+                    //.attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; });
+                    .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                alpha = alpha + 2 * Math.PI * data[i]._all / red[11];
+            }
+            var legend = svg.selectAll(".legend")
+                .data([0].concat(colorScale.quantiles()), function(d) { return d; })    // 由data获得的元素个数为7
+                .enter().append("g")
+                .attr("class", "legend");
+            legend.append("rect")
+                .attr("x", -450 )
+                .attr("y", function (d, i) {return gridSize * i / 3})
+                .attr("width", legendElementWidth)
+                .attr("height", gridSize / 3)
+                .style("fill", function(d, i) { return colors[i]; });
+            legend.append("text")
+                .attr("class", "mono")
+                .text(function(d) { return ">= "+Math.round(d); })
+                .attr("x", -350)
+                .attr("y", function (d, i) {return gridSize * i / 3 + 18});
+            var legend1 = svg.selectAll(".legend1")
+                .data(data)    // 由data获得的元素个数为12
+                .enter().append("g")
+                .attr("class", "legend1");
+            legend1.append("rect")
+                .attr("x", -450 )
+                .attr("y", function (d, i) {return gridSize * i / 4 - 250})
+                .attr("width", legendElementWidth)
+                .attr("height", gridSize / 4)
+                .style("fill", function(d, i) { return myColor[i]; });
+            legend1.append("text")
+                .attr("class", "mono")
+                .text(function(d) { return d.Genre; })
+                .attr("x", -350)
+                .attr("y", function (d, i) {return gridSize * i / 4 - 238});
+        })
+
+
+
+
+    var butt = svg.selectAll(".redRect")
+        .data(red).enter()
+        .append("rect")
+        .attr("class","redRect")
+        .attr("x", -480 )
+        .attr("y", function (d, i) {return gridSize * i / 4 - 250})
+        .attr("width", gridSize / 5)
+        .attr("height", gridSize / 5)
+        .attr("fill", 'red')
+        .on('click',function(d, i) {
+            var array_data = [], array_1980 = [], array_1990 = [], array_2000 = [], array_2010 = [], array_temp = [];
+            ii = i;
+            var alpha = 0;
+            svg.selectAll(".greenRect")
+                .remove();
+            svg.selectAll("path")
+                .remove();
+            var greenRect = svg.selectAll(".greenRect")
+                .data(red).enter()
+                .append("rect")
+                .attr("class","greenRect")
+                .attr("x", -480 )
+                .attr("y", gridSize * i / 4 - 250)
+                .attr("width", gridSize / 5)
+                .attr("height", gridSize / 5)
+                .attr("fill", '#2FFD01' )
+            d3.csv("../data/gen_year.csv", //function(d) {}, function(error, data) {} );
+
+                function(error, data) {
+
+                    var colorScale = d3.scale.quantile()        // 按分位数取值，可使每个区域内元素个数相等
+                        .domain([0, buckets - 1, d3.max(data, function (d) { return d.U_2000s; })])  // 定义域
+                        // domain([0, n, 数据的最大值]);
+                        .range(colors);    // 值域：是颜色数组，函数的返回值是代表某种颜色的字符串
+
+                    for (var i = ii; i < 12; i++){
+                        array_data[i-ii] = data[i]._all;
+                        array_1980[(i-ii)*3] = data[i].U_1980s;
+                        array_1980[(i-ii)*3+1] = data[i].E_1980s;
+                        array_1980[(i-ii)*3+2] = data[i].J_1980s;
+                        array_1990[(i-ii)*3] = data[i].U_1980s;
+                        array_1990[(i-ii)*3+1] = data[i].E_1990s;
+                        array_1990[(i-ii)*3+2] = data[i].J_1990s;
+                        array_2000[(i-ii)*3] = data[i].U_2000s;
+                        array_2000[(i-ii)*3+1] = data[i].E_2000s;
+                        array_2000[(i-ii)*3+2] = data[i].J_2000s;
+                        array_2010[(i-ii)*3] = data[i].U_2010s;
+                        array_2010[(i-ii)*3+1] = data[i].E_2010s;
+                        array_2010[(i-ii)*3+2] = data[i].J_2010s;
+                    }
+                    svg.selectAll("path")
+                        .data(pie(array_data))
+                        .enter().append("path")
+                        .style("fill", function(d, i) { return myColor[i+ii]; })
+                        .attr("d", arc)
+
+                    for(var i = ii;i < 12;i++){
+                        var arc1 = d3.svg.arc()
+                            .innerRadius(0)
+                            .outerRadius(Math.min(radius / 2 *data[i]._all / red[11-ii], radius / 10));
+                        array_temp[0] = array_1980[(i-ii)*3];
+                        array_temp[1] = array_1980[(i-ii)*3+1];
+                        array_temp[2] = array_1980[(i-ii)*3+2];
+                        var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11-ii];
+                        var x_off = (radius-30)*Math.sin(theta);
+                        var y_off = (radius-30)*Math.cos(theta);
+                        svg.selectAll("path1")
+                            .data(pie(array_temp))
+                            .enter().append("path")
+                            .style("fill", function (d, j) {
+                                return colorScale(array_temp[j]);
+                            })
+                            .attr("d", arc1)
+                            .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                        alpha = alpha + 2 * Math.PI * data[i]._all / red[11-ii];
+                    }
+                    for(var i = ii;i < 12;i++){
+                        var arc1 = d3.svg.arc()
+                            .innerRadius(0)
+                            .outerRadius(Math.min(radius / 2 *data[i]._all / red[11-ii], radius / 10));
+                        array_temp[0] = array_1990[(i-ii)*3];
+                        array_temp[1] = array_1990[(i-ii)*3+1];
+                        array_temp[2] = array_1990[(i-ii)*3+2];
+                        var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11-ii];
+                        var x_off = (radius-80)*Math.sin(theta);
+                        var y_off = (radius-80)*Math.cos(theta);
+                        svg.selectAll("path2")
+                            .data(pie(array_temp))
+                            .enter().append("path")
+                            .style("fill", function (d, j) {
+                                return colorScale(array_temp[j]);
+                            })
+                            .attr("d", arc1)
+                            .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                        alpha = alpha + 2 * Math.PI * data[i]._all / red[11-ii];
+                    }
+                    for(var i = ii;i < 12;i++){
+                        var arc1 = d3.svg.arc()
+                            .innerRadius(0)
+                            .outerRadius(Math.min(radius / 2 *data[i]._all / red[11-ii], radius / 10));
+                        array_temp[0] = array_2000[(i-ii)*3];
+                        array_temp[1] = array_2000[(i-ii)*3+1];
+                        array_temp[2] = array_2000[(i-ii)*3+2];
+                        var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11-ii];
+                        var x_off = (radius-130)*Math.sin(theta);
+                        var y_off = (radius-130)*Math.cos(theta);
+                        svg.selectAll("path3")
+                            .data(pie(array_temp))
+                            .enter().append("path")
+                            .style("fill", function (d, j) {
+                                return colorScale(array_temp[j]);
+                            })
+                            .attr("d", arc1)
+                            .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                        alpha = alpha + 2 * Math.PI * data[i]._all / red[11-ii];
+                    }
+                    for(var i = ii;i < 12;i++){
+                        var arc1 = d3.svg.arc()
+                            .innerRadius(0)
+                            .outerRadius(Math.min(radius / 2 *data[i]._all / red[11-ii], radius / 10));
+                        array_temp[0] = array_2010[(i-ii)*3];
+                        array_temp[1] = array_2010[(i-ii)*3+1];
+                        array_temp[2] = array_2010[(i-ii)*3+2];
+                        var theta = Math.PI - alpha - Math.PI * data[i]._all / red[11-ii];
+                        var x_off = (radius-180)*Math.sin(theta);
+                        var y_off = (radius-180)*Math.cos(theta);
+                        svg.selectAll("path4")
+                            .data(pie(array_temp))
+                            .enter().append("path")
+                            .style("fill", function (d, j) {
+                                return colorScale(array_temp[j]);
+                            })
+                            .attr("d", arc1)
+                            .attr("transform", "translate(" + x_off + "," + y_off + ")");
+                        alpha = alpha + 2 * Math.PI * data[i]._all / red[11-ii];
+                    }
+                    var legend = svg.selectAll(".legend")
+                        .data([0].concat(colorScale.quantiles()), function(d) { return d; })    // 由data获得的元素个数为7
+                        .enter().append("g")
+                        .attr("class", "legend");
+                    legend.append("rect")
+                        .attr("x", -450 )
+                        .attr("y", function (d, i) {return gridSize * i / 3})
+                        .attr("width", legendElementWidth)
+                        .attr("height", gridSize / 3)
+                        .style("fill", function(d, i) { return colors[i]; });
+                    legend.append("text")
+                        .attr("class", "mono")
+                        .text(function(d) { return ">= "+Math.round(d); })
+                        .attr("x", -350)
+                        .attr("y", function (d, i) {return gridSize * i / 3 + 18});
+                })
+        })
+
+
+</script>

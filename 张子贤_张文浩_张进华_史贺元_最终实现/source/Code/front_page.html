@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>游戏数据分析</title>
+  <link rel='stylesheet' type='text/css' href='../css/bg.css'>
+</head>
+<script>
+  function change() {
+    document.getElementById("genre").style.animation = "front1 1.2s ease-in-out alternate"
+    document.getElementById("platform").style.animation = "front1 1.2s ease-in-out alternate"
+    document.getElementById("publish").style.animation = "front2 1.2s ease-in-out alternate"
+    document.getElementById("pad").style.animation = "front3 1s ease-in-out alternate"
+    setTimeout(function () {
+      document.getElementById("genre").style.visibility = "hidden"
+      document.getElementById("platform").style.visibility = "hidden"
+      document.getElementById("publish").style.visibility = "hidden"
+      document.getElementById("pad").style.visibility = "hidden"
+      window.location.href = './tree.html';
+    }, 1000)
+  }
+</script>
+
+<body scrolling="no">
+  <div class="bg">
+    <img id="pad" style="position:absolute;" width="200px" src="../data/Gamepad.png" onclick="change()">
+    <iframe id="genre" scrolling='no' style="position:absolute;border:0px;;transform: scale(.7, .7)"
+      src="./GenreCiYun.html" height="650" width="650"></iframe>
+    <iframe id="publish" scrolling='no' style="position:absolute;border:0px;transform: scale(.7, .7)"
+      src="./PublishCiYun.html" height="650" width="650"></iframe>
+    <iframe id="platform" scrolling='no' style="position:absolute;border:0px;transform: scale(.7, .7)"
+      src="./PlatformCiYun.html" height="650" width="650"></iframe>
+  </div>
+</body>
+<script>
+  document.getElementById("pad").style.left = document.body.clientWidth / 2 - 100 + "px";
+  document.getElementById("pad").style.top = document.body.clientHeight / 2 + 400 + "px";
+  document.getElementById("genre").style.left = 0 + "px";
+  document.getElementById("genre").style.top = 80 + "px";
+  document.getElementById("publish").style.left = 360 + "px";
+  document.getElementById("publish").style.top = -120 + "px";
+  document.getElementById("platform").style.left = 720 + "px";
+  document.getElementById("platform").style.top = 80 + "px";
+</script>
+
+</html>

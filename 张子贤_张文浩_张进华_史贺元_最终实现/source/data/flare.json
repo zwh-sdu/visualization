@@ -1,0 +1,46 @@
+{
+    "name": "游戏销售",
+    "children": [
+     {
+      "name": "类型",
+      "children": [
+        {"name": "action"},
+        {"name": "music"},
+        {"name": "sports"},
+        {"name": "Platform"},
+        {"name": "Racing"}
+      ]
+     },
+     {
+      "name": "平台",
+      "children": [
+        {"name": "Wii"},
+        {"name": "NES"},
+        {"name": "GB"},
+        {"name": "DS"},
+        {"name": "X360"},
+        {"name": "PS3"},
+        {"name": "PS2"},
+        {"name": "3DS"},
+        {"name": "SENS"},
+        {"name": "PS4"}
+      ]
+     },
+     {
+      "name": "发布商",
+      "children": [
+        {"name": "Nintendo"},
+        {"name": "Microsoft Game Studios"},
+        {"name": "Take-Two Interactive"},
+        {"name": "Sony Computer Entertainment"},
+        {"name": "Activision"},
+        {"name": "Ubisoft"},
+        {"name": "Bethesda Softworks"},
+        {"name": "Electronic Arts"},
+        {"name": "Sega"},
+        {"name": "SquareSoft"},
+        {"name": "Atari"}
+      ]
+     }
+    ]
+   }

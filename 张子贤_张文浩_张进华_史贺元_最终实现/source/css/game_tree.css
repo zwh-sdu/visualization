@@ -1,0 +1,212 @@
+body{
+    background: url("../data/bored.jpg") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    overflow:hidden;
+}
+.node {
+    cursor: pointer;
+}
+.node circle {
+    fill: #fff;
+    stroke: rgb(206, 248, 92);
+    stroke-width: 8px;
+}
+.node text {
+    font: 16px sans-serif;
+}
+.link {
+    fill: none;
+    stroke: #ccc;
+    stroke-width: 6px;
+}
+.hidden {
+    /* fill: lavender !important; */
+    stroke:red
+}
+
+@keyframes snd {
+  0% {
+      -webkit-transform: scale(1);
+      stroke: rgb(206, 248, 92);
+  }
+  50% {
+      -webkit-transform: scale(2);
+      stroke: darkred;
+  }
+  100% {
+      -webkit-transform: scale(1);
+      stroke: rgb(206, 248, 92);
+  }
+}
+
+@keyframes river_in {
+    0% {
+        -webkit-transform: scale(0);
+        /* -webkit-transform: translateX(100%); */
+    }
+    80% {
+        -webkit-transform: scale(1.1);
+        /* -webkit-transform: translateX(-1%); */
+    }
+    100% {
+        -webkit-transform: scale(1);
+        /* -webkit-transform: translateX(0); */
+    }
+}
+
+@keyframes river_out {
+    0% {
+        -webkit-transform: scale(1);
+        /* -webkit-transform: translateX(100%); */
+    }
+    20% {
+        -webkit-transform: scale(1.1);
+        /* -webkit-transform: translateX(-1%); */
+    }
+    100% {
+        -webkit-transform: scale(0);
+        /* -webkit-transform: translateX(0); */
+    }
+}
+@keyframes bar_in {
+    0% {
+      -webkit-transform: scale(0);
+        /* -webkit-transform: translateX(100%); */
+    }
+    80% {
+      -webkit-transform: scale(0.8);
+        /* -webkit-transform: translateX(-1%); */
+    }
+    100% {
+      -webkit-transform: scale(0.7);
+        /* -webkit-transform: translateX(0); */
+    }
+}
+@keyframes bar_out 
+{
+    0% {
+      -webkit-transform: scale(0.7);
+        /* -webkit-transform: translateX(100%); */
+    }
+    20% {
+      -webkit-transform: scale(0.8);
+        /* -webkit-transform: translateX(-1%); */
+    }
+    100% {
+      -webkit-transform: scale(0);
+        /* -webkit-transform: translateX(0); */
+    }
+}
+@keyframes line_in {
+    0% {
+        -webkit-transform: translateX(-100%);
+    }
+    80% {
+        -webkit-transform: translateX(1%);
+    }
+    100% {
+        -webkit-transform: translateX(0);
+    }
+}
+@keyframes line_out 
+{
+    0% {
+        -webkit-transform: translateX(0);
+    }
+    20% {
+        -webkit-transform: translateX(1%);
+    }
+    100% {
+        -webkit-transform: translateX(-100%);
+    }
+}
+@keyframes pie_in {
+    0% {
+        -webkit-transform: translateX(100%) scale(0.66);
+    }
+    80% {
+        -webkit-transform: translateX(-1%) scale(0.66);
+    }
+    100% {
+        -webkit-transform: translateX(0) scale(0.66);
+    }
+}
+@keyframes pie_out 
+{
+    0% {
+        -webkit-transform: translateX(0) scale(0.66);
+    }
+    20% {
+        -webkit-transform: translateX(-1%)scale(0.66);
+    }
+    100% {
+        -webkit-transform: translateX(100%) scale(0.66);
+    }
+}
+@keyframes hot_in {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity:100%;
+    }
+}
+@keyframes hot_out 
+{
+    0% {
+        opacity: 100%;
+    }
+    100% {
+        opacity:0;
+    }
+}
+
+form {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    position: absolute;
+    left: 40px;
+    top: 10px;
+}
+.axis path,
+.axis line{
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+.axis text {
+    font-family: sans-serif;
+    font-size: 15px;
+}
+
+label {
+    display: block;
+}
+
+.tree_raw{
+    position: absolute;
+    /* left: calc(100vw / 750 * 130); */
+    left:140px;
+    top:0px;
+    z-index: 10;
+    /* transform:scale(1); */
+    transition: top 1s ease-in-out,transform 1s ease-in-out,left 1s ease-in-out;
+}
+
+.tree_pf{
+    left: -100px;
+    top: -200px;
+    transform:scale(0.7)
+}
+.tree_ge{
+    left: -100px;
+    top: 240px;
+    transform:scale(0.7)
+}
+.tree_pub{
+    left: 600px;
+    top: 0px;
+    transform:scale(0.7)
+}

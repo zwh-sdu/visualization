@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>tree layout</title>
+    <style>
+        .node {
+          cursor: pointer;
+        }
+        .node circle {
+          fill: #fff;
+          stroke: steelblue;
+          stroke-width: 5px;
+        }
+        .node text {
+          font: 16px sans-serif;
+        }
+        .link {
+          fill: none;
+          stroke: #ccc;
+          stroke-width: 5px;
+        }
+  </style>
+</head>
+<body>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
+  <script src="./jquery.js" charset="utf-8"></script> 
+<script>
+
+    var width = 500,
+        height = 500;
+
+    var i = 0,
+        duration = 1000,
+        root;
+
+    var tree = d3.layout.tree()
+        .size([360, 320])  //360代表展开的最大角度也就是圆，后面的r值代表整个辐射布局的展开最大半径，并不是指某一层级的半径而是整个树,超过这个范围的就不显示了，后面85行d.y的才是某一层级的半径设置。
+        .separation(function(a, b) {
+            return (a.parent == b.parent ? 1 : 2) / a.depth;  //适应radial布局，可以简单的理解为深度越高，相邻子节点之间的距离越小。
+        });
+    // 径向对角线生成器也是一个函数，主要用来生成用以绘制连线数据。
+    var diagonal = d3.svg.diagonal.radial()
+        .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; }); //d.y代表半径，(d.x/180)*PI就是各个节点的弧度表示。
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .append("g")
+        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+    d3.json("flare.json", function(error, flare) {
+      if (error) throw error;
+
+      root = flare;
+      root.x0 = height / 2;  //由于是辐射布局这边当y0设置为0,那么这个角度x0随便设置也无所谓 因为肯定是在圆心。这里的理解不知道对不对
+      root.y0 = 0;
+
+      function collapse(d) {
+        if (d.children) {
+          d._children = d.children;
+          d._children.forEach(collapse);
+          d.children = null;
+        }
+      }
+
+      root.children.forEach(collapse);
+      update(root);
+    });
+
+    // 为了在iframe中正常显示而已。
+    d3.select(self.frameElement).style("height", "800px");
+
+    function update(source) {
+
+      // 计算新的layout tree
+      var nodes = tree.nodes(root),
+          links = tree.links(nodes);
+
+      // 根据深度来给定相应半径，也就是深度越大半径越长。
+      nodes.forEach(function(d) { d.y = d.depth * 100; });
+
+      // 节点更新
+      var node = svg.selectAll("g.node")
+          .data(nodes, function(d) { return d.id || (d.id = ++i); });
+
+      // 父节点前增添节点
+      var nodeEnter = node.enter().append("g")
+          .attr("class", "node")
+          .on("click", click)
+          .on("mouseenter",mouseenter)
+          .on("dblclick",dblclick);
+
+      nodeEnter.append("circle")
+          .attr("r", 1e-6)
+          .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+      nodeEnter.append("text")
+          .attr("dy", ".35em")
+
+      .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })//小于180度的文字放在前面，否则放在后面  
+      .attr("transform", function(d) { return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)"; })
+          .text(function(d) { return d.name; })
+          .style("fill-opacity", 1e-6);
+
+      // 将节点移动到新位置
+      var nodeUpdate = node.transition()
+          .duration(duration)
+          .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+          //translate 与 rotate 的作用效果是怎么样的？？？
+      nodeUpdate.select("circle")
+          .attr("r", 4.5)
+          .style("fill", function(d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+      nodeUpdate.select("text")
+          .style("fill-opacity", 1);
+
+      // Transition exiting nodes to the parent's new position.
+      var nodeExit = node.exit().transition()
+          .duration(duration)
+          .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+          .remove();
+
+      nodeExit.select("circle")
+          .attr("r", 1e-6);
+
+      nodeExit.select("text")
+          .style("fill-opacity", 1e-6);
+
+      // 更新节点链
+      var link = svg.selectAll("path.link")
+          .data(links, function(d) { return d.target.id; });
+
+      // Enter any new links at the parent's previous position.
+      link.enter().insert("path", "g")
+          .attr("class", "link")
+          .attr("d", function(d) {
+            var o = {x: source.x0, y: source.y0};
+            return diagonal({source: o, target: o});
+          });
+
+      // Transition links to their new position.
+      link.transition()
+          .duration(duration)
+          .attr("d", diagonal);
+
+      // Transition exiting nodes to the parent's new position.
+      link.exit().transition()
+          .duration(duration)
+          .attr("d", function(d) {
+            var o = {x: source.x0, y: source.y0};
+            return diagonal({source: o, target: o});
+          })
+          .remove();
+
+      // Stash the old positions for transition.
+      nodes.forEach(function(d) {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+    }
+
+    // Toggle children on click.
+    function click(d) {
+      if (d.children) {
+        d._children = d.children;
+        d.children = null;
+      } else {
+        d.children = d._children;
+        d._children = null;
+      }
+      update(d);
+      switch (d.name) {
+        case "Nintendo":
+          trans(3)
+          break;
+        case "Take-Two Interactive":
+          trans(8)
+          break;
+        case "Microsoft Game Studios":
+          trans(13)
+          break;
+      //   case "DS":
+      //     trans(3)
+      //     break;
+      //   case "SENS":
+      //     trans(7)
+      //     break;
+      //   case "GB":
+      //     trans(2)
+      //     break;
+      }
+    }
+
+    function trans(x){
+      localStorage.platform=x
+      location.href="#page1"
+      document.getElementById("page1").contentWindow.location.reload(true)
+    }
+
+    function mouseenter(d){
+      console.log("鼠标在这上面：",d['name'])
+    }
+
+    function dblclick(d){
+      console.log(d['name'],":被双击")
+    }
+  </script>
+  <iframe id="page1" style="border:0px" src="./pub_year.html" height="600" width="900"></iframe>
+  <!-- <object style="border:0px" data="./Stream_graph.html" width=900 height=600></object> -->
+</body>
+</html>

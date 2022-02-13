@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>tree layout</title>
+  <link rel='stylesheet' type='text/css' href='../css/game_tree.css'>
+  <script src="../d3/d3.min.js" charset="utf-8"></script>
+  <script src="./jquery.js" charset="utf-8"></script>
+</head>
+
+<body class="bg">
+  <div id="tree" class="tree_raw"></div>
+  <script>
+    // document.getElementById("tree").style.left=document.body.clientWidth/2-400+"px";
+    // document.getElementById("tree").style.top=document.body.clientHeight/2+"px";
+    var width = 1000,
+      height = 700;
+
+    var i = 0,
+      duration = 1000,
+      root;
+
+    var tree = d3.layout.tree()
+      .size([360, 320])  //360代表展开的最大角度也就是圆，后面的r值代表整个辐射布局的展开最大半径，并不是指某一层级的半径而是整个树,超过这个范围的就不显示了，后面85行d.y的才是某一层级的半径设置。
+      .separation(function (a, b) {
+        return (a.parent == b.parent ? 1 : 2) / a.depth;  //适应radial布局，可以简单的理解为深度越高，相邻子节点之间的距离越小。
+      });
+    // 径向对角线生成器也是一个函数，主要用来生成用以绘制连线数据。
+    var diagonal = d3.svg.diagonal.radial()
+      .projection(function (d) { return [d.y, d.x / 180 * Math.PI]; }); //d.y代表半径，(d.x/180)*PI就是各个节点的弧度表示。
+
+    var svg = d3.select("div").append("svg")
+      .attr("width", width)
+      .attr("height", height)
+      .append("g")
+      .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")")
+
+
+    d3.json("../data/flare.json", function (error, flare) {
+      if (error) throw error;
+
+      root = flare;
+      root.x0 = height / 2;  //由于是辐射布局这边当y0设置为0,那么这个角度x0随便设置也无所谓 因为肯定是在圆心。这里的理解不知道对不对
+      root.y0 = 0;
+
+      function collapse(d) {
+        if (d.children) {
+          d._children = d.children;
+          d._children.forEach(collapse);
+          d.children = null;
+        }
+      }
+
+      root.children.forEach(collapse);
+      update(root);
+    });
+
+    // 为了在iframe中正常显示而已。
+    d3.select(self.frameElement).style("height", "800px");
+
+    function update(source) {
+
+      // 计算新的layout tree
+      var nodes = tree.nodes(root),
+        links = tree.links(nodes);
+
+      // 根据深度来给定相应半径，也就是深度越大半径越长。
+      nodes.forEach(function (d) { d.y = d.depth * 100; });
+
+      // 节点更新
+      var node = svg.selectAll("g.node")
+        .data(nodes, function (d) { return d.id || (d.id = ++i); });
+
+      // 父节点前增添节点
+      var nodeEnter = node.enter().append("g")
+        .attr("class", "node")
+        .on("click", click)
+        .on("mouseenter", mouseenter)
+        .on("dblclick", dblclick);
+
+      nodeEnter.append("circle")
+      // .attr("r", 1e-6)
+      // .style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+      nodeEnter.append("text")
+        .attr("dy", ".35em")
+        .attr("text-anchor", function (d) { return d.x < 180 ? "start" : "end"; })//小于180度的文字放在前面，否则放在后面
+        .attr("transform", function (d) { return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)"; })
+        .text(function (d) { return d.name; })
+        .style("fill-opacity", 1e-6)
+        .style("fill", "")
+
+      // 将节点移动到新位置
+      var nodeUpdate = node.transition()
+        .duration(duration)
+        .attr("transform", function (d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+      //translate 与 rotate 的作用效果是怎么样的？？？
+      nodeUpdate.select("circle")
+        .attr("r", 8)
+        .style("fill", function (d) { return d._children ? "lightsteelblue" : "#fff"; });
+
+      nodeUpdate.select("text")
+        .style("fill-opacity", 1)
+        .style("font-size", "20px")
+
+      // Transition exiting nodes to the parent's new position.
+      var nodeExit = node.exit().transition()
+        .duration(duration)
+        .attr("transform", function (d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
+        .remove();
+
+      nodeExit.select("circle")
+        .attr("r", 1e-6);
+
+      nodeExit.select("text")
+        .style("fill-opacity", 1e-6);
+
+      // 更新节点链
+      var link = svg.selectAll("path.link")
+        .data(links, function (d) { return d.target.id; });
+
+      // Enter any new links at the parent's previous position.
+      link.enter().insert("path", "g")
+        .attr("class", "link")
+        .style("stroke", function (d, i) {
+          var r = Math.floor(Math.random() * 256);
+          var g = Math.floor(Math.random() * 256);
+          var b = Math.floor(Math.random() * 256);
+          return "rgb(" + r + "," + g + "," + b + ")";
+        })
+        .attr("d", function (d) {
+          var o = { x: source.x0, y: source.y0 };
+          return diagonal({ source: o, target: o });
+        });
+
+      // Transition links to their new position.
+      link.transition()
+        .duration(duration)
+        .attr("d", diagonal);
+
+      // Transition exiting nodes to the parent's new position.
+      link.exit().transition()
+        .duration(duration)
+        .attr("d", function (d) {
+          var o = { x: source.x0, y: source.y0 };
+          return diagonal({ source: o, target: o });
+        })
+        .remove();
+
+      // Stash the old positions for transition.
+      nodes.forEach(function (d) {
+        d.x0 = d.x;
+        d.y0 = d.y;
+      });
+    }
+
+    // Toggle children on click.
+    function click(d) {
+      if (d.name == "游戏销售") {
+        if (d.children) {
+          d._children = d.children;
+          d.children = null;
+        } else {
+          d.children = d._children;
+          d._children = null;
+        }
+        update(d)
+      }
+      if (d.name == "平台" || d.name == "类型" || d.name == "发布商") {
+        if (d.parent.children[0].children) {
+          d.parent.children[0]._children = d.parent.children[0].children;
+          d.parent.children[0].children = null;
+        } else {
+          d.parent.children[0].children = d.parent.children[0]._children;
+          d.parent.children[0]._children = null;
+        }
+        if (d.parent.children[1].children) {
+          d.parent.children[1]._children = d.parent.children[1].children;
+          d.parent.children[1].children = null;
+        } else {
+          d.parent.children[1].children = d.parent.children[1]._children;
+          d.parent.children[1]._children = null;
+        }
+        if (d.parent.children[2].children) {
+          d.parent.children[2]._children = d.parent.children[2].children;
+          d.parent.children[2].children = null;
+        } else {
+          d.parent.children[2].children = d.parent.children[2]._children;
+          d.parent.children[2]._children = null;
+        }
+        update(d.parent.children[0]);
+        update(d.parent.children[1]);
+        update(d.parent.children[2]);
+
+        svg.selectAll("g.node").style("visibility", function (dd, i) {
+          if (dd.name == "游戏销售" || dd.parent.name == "游戏销售" || dd.parent.name == d.name)
+            return "visible"
+          else return "hidden"
+        })
+        svg.selectAll("path.link").style("visibility", function (dd, i) {
+          if (dd.source.name == "游戏销售" || dd.source.name == d.name)
+            return "visible"
+          else return "hidden"
+        })
+      }
+      //展示river图（平台-年份关系）
+      if (d.name == '平台') {
+        if (document.getElementById('pf_river').style.visibility == "hidden") {
+          setTimeout(() => { document.getElementsByClassName("tree_raw")[0].classList.add('tree_pf') }, 1)
+          document.getElementById('pf_river').style.visibility = "visible"
+          document.getElementById('pf_river').style.animation = "river_in 1s ease-in-out alternate"
+        } else {
+          setTimeout(() => { document.getElementsByClassName("tree_raw")[0].classList.remove('tree_pf') }, 1)
+          document.getElementById('pf_river').style.animation = "river_out 1s ease-in-out alternate"
+          setTimeout("document.getElementById('pf_river').style.visibility='hidden'", 1000);    //等待2s执行一次
+        }
+        if (document.getElementById('pf_bar').style.visibility == "hidden") {
+          document.getElementById('pf_bar').style.visibility = "visible"
+          document.getElementById('pf_bar').style.animation = "bar_in 1s ease-in-out alternate"
+        } else {
+          document.getElementById('pf_bar').style.animation = "bar_out 1s ease-in-out alternate"
+          setTimeout("document.getElementById('pf_bar').style.visibility='hidden'", 1000);    //等待2s执行一次
+        }
+      }
+      if (d.name == '发布商') {
+        if (document.getElementById('pub_hot').style.visibility == "hidden") {
+          setTimeout(() => { document.getElementsByClassName("tree_raw")[0].classList.add('tree_pub') }, 1)
+          document.getElementById('pub_hot').style.visibility = "visible"
+          document.getElementById('pub_hot').style.animation = "hot_in 1s ease-in-out alternate"
+        } else {
+          setTimeout(() => { document.getElementsByClassName("tree_raw")[0].classList.remove('tree_pub') }, 1)
+          document.getElementById('pub_hot').style.animation = "hot_out 1s ease-in-out alternate"
+          setTimeout("document.getElementById('pub_hot').style.visibility='hidden'", 1000);    //等待2s执行一次
+        }
+
+      }
+      if (d.name == '类型') {
+        if (document.getElementById('ge_line').style.visibility == "hidden") {
+          setTimeout(() => { document.getElementsByClassName("tree_raw")[0].classList.add('tree_ge') }, 1)
+          document.getElementById('ge_line').style.visibility = "visible"
+          document.getElementById('ge_line').style.animation = "line_in 1s ease-in-out alternate"
+        } else {
+          setTimeout(() => { document.getElementsByClassName("tree_raw")[0].classList.remove('tree_ge') }, 1)
+          document.getElementById('ge_line').style.animation = "line_out 1s ease-in-out alternate"
+          setTimeout("document.getElementById('ge_line').style.visibility='hidden'", 1000);    //等待2s执行一次
+        }
+        if (document.getElementById('ge_pie').style.visibility == "hidden") {
+          document.getElementById('ge_pie').style.visibility = "visible"
+          document.getElementById('ge_pie').style.animation = "pie_in 1s ease-in-out alternate"
+        } else {
+          document.getElementById('ge_pie').style.animation = "pie_out 1s ease-in-out alternate"
+          setTimeout("document.getElementById('ge_pie').style.visibility='hidden'", 1000);    //等待2s执行一次
+        }
+      }
+      if (d.name == "游戏销售") {
+        setTimeout("window.location.href='./front_page.html'", 1000)
+      }
+      svg.selectAll("circle").style("animation", function (nd) {
+        if (nd.name == d.name) {
+          return "snd 0.5s ease-in-out alternate"
+        } else {
+          return
+        }
+      })
+      switch (d.name) {
+        // platform
+        case "Wii":
+          document.getElementById('pf_river').contentWindow.postMessage(0, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(0, '*');
+          break;
+        case "NES":
+          document.getElementById('pf_river').contentWindow.postMessage(1, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(1, '*');
+          break;
+        case "X360":
+          document.getElementById('pf_river').contentWindow.postMessage(4, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(4, '*');
+          break;
+        case "DS":
+          document.getElementById('pf_river').contentWindow.postMessage(3, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(3, '*');
+          break;
+        case "SENS":
+          document.getElementById('pf_river').contentWindow.postMessage(7, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(7, '*');
+          break;
+        case "GB":
+          document.getElementById('pf_river').contentWindow.postMessage(2, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(2, '*');
+          break;
+        case "PS3":
+          document.getElementById('pf_river').contentWindow.postMessage(5, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(5, '*');
+          break;
+        case "PS2":
+          document.getElementById('pf_river').contentWindow.postMessage(6, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(6, '*');
+          break;
+        case "3DS":
+          document.getElementById('pf_river').contentWindow.postMessage(9, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(9, '*');
+          break;
+        case "PS4":
+          document.getElementById('pf_river').contentWindow.postMessage(10, '*');
+          document.getElementById('pf_bar').contentWindow.postMessage(10, '*');
+          break;
+        // publish
+        case "Nintendo":
+          document.getElementById('pub_hot').contentWindow.postMessage(3, '*');
+          break;
+        case "Microsoft Game Studios":
+          document.getElementById('pub_hot').contentWindow.postMessage(8, '*');
+          break;
+        case "Take-Two Interactive":
+          document.getElementById('pub_hot').contentWindow.postMessage(13, '*');
+          break;
+        case "Sony Computer Entertainment":
+          document.getElementById('pub_hot').contentWindow.postMessage(18, '*');
+          break;
+        case "Activision":
+          document.getElementById('pub_hot').contentWindow.postMessage(23, '*');
+          break;
+        case "Ubisoft":
+          document.getElementById('pub_hot').contentWindow.postMessage(28, '*');
+          break;
+        case "Bethesda Softworks":
+          document.getElementById('pub_hot').contentWindow.postMessage(33, '*');
+          break;
+        case "Electronic Arts":
+          document.getElementById('pub_hot').contentWindow.postMessage(38, '*');
+          break;
+        case "Sega":
+          document.getElementById('pub_hot').contentWindow.postMessage(43, '*');
+          break;
+        case "SquareSoft":
+          document.getElementById('pub_hot').contentWindow.postMessage(48, '*');
+          break;
+        case "Atari":
+          document.getElementById('pub_hot').contentWindow.postMessage(53, '*');
+        default: break;
+      }
+    }
+    map_pub = { 0: "Nintendo", 1: "Microsoft Game Studios", 2: "Take-Two Interactive", 3: "Sony Computer Entertainment", 4: "Activision", 5: "Ubisoft", 6: "Bethesda Softworks", 7: "Electronic Arts", 8: "Sega", 9: "SquareSoft", 10: "Atari" }
+    map = { 0: "Wii", 1: "NES", 2: "GB", 3: "DS", 4: "X360", 5: "PS3", 6: "PS2", 7: "SNES", 8: "GBA", 9: "3DS", 10: "PS4", 11: "N64", 12: "PS", 13: "XB", 14: "PC", 15: "2600", 16: "PSP", 17: "XOne", 18: "GC", 19: "WiiU", 20: "GEN", 21: "DC", 22: "PSV", 23: "SAT" };
+    function receiveMessage(e) {
+      if (e.data.g == "hot") {
+        console.log(e.data.num)
+        svg.selectAll("circle").style("animation", function (nd) {
+          if (nd.name == map_pub[e.data.num]) {
+            return "snd 0.5s ease-in-out alternate"
+          } else {
+            return
+          }
+        })
+      } else {
+        if (e.data == -1) {
+        }
+        else {
+          svg.selectAll("circle").style("animation", function (nd) {
+            if (nd.name == map[e.data]) {
+              return "snd 0.5s ease-in-out alternate"
+            } else {
+              return
+            }
+          })
+        }
+        document.getElementById('pf_river').contentWindow.postMessage(e.data, '*')
+        document.getElementById('pf_bar').contentWindow.postMessage(e.data, '*')
+      }
+    }
+    window.addEventListener("message", receiveMessage, false);
+
+    function mouseenter(d) {
+      // console.log("鼠标在这上面：",d['name'])
+    }
+
+    function dblclick(d) {
+      // console.log(d['name'],":被双击")
+    }
+  </script>
+  <iframe id="pf_river" style="border:0px;visibility:hidden;position: absolute;top:100px;left:600px" scrolling='no'
+    src="./Stream_graph.html" height="500" width="600"></iframe>
+  <iframe id="pf_bar" scrolling='no'
+    style="border:0px;visibility:hidden;position: absolute;bottom:-50px;left:-100px;z-index: 11;transform:scale(0.7)"
+    src="./stacked_to_grouped_bars.html" height="520" width="960"></iframe>
+  <iframe id="ge_line" scrolling='no' style="border:0px;visibility:hidden;position: absolute;left:10px;top:0px"
+    src="./SelectContentGenre.html" height="420" width="900"></iframe>
+  <iframe id="ge_pie" scrolling='no'
+    style="border:0px;visibility:hidden;position: absolute;left: 480px;top:30px;transform:scale(0.66)"
+    src="./sanjiao.html" height="800" width="960"></iframe>
+  <iframe id="pub_hot" scrolling='no'
+    style="border:0px;visibility:hidden;position: absolute;left:-150px;top:-120px;transform:scale(0.8)"
+    src="./pub_year.html" height="1000" width="960"></iframe>
+</body>
+
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8"> 
+        <title>可视化实验1</title> 
+        <script src="http://d3js.org/d3.v4.js" charset="utf-8"></script> 
+    </head>
+    <body>
+        <script>
+            //声明margin,半径的大小,颜色
+            var margin = {top: 20, right: 20, bottom: 20, left: 20},
+            width = 600 - margin.right - margin.left,
+            height = 600 - margin.top - margin.bottom,
+            radius = width/3;
+
+            var color3 = d3.scaleOrdinal()
+                .range(["#64B5F6","#1E88E5","#99FF99","#008800","#FFBB66","#CC6600","#FF77FF","#990099"]);
+            
+            //生成弧度生成器-src generator
+            var arc = d3.arc()
+                .outerRadius( radius)
+                .innerRadius(0);
+
+            var labelArc = d3.arc()
+                .outerRadius(radius + 50)
+                .innerRadius(radius - 50)
+
+            //声明饼图生成器
+            var pie = d3.pie()
+                .sort(null)
+                .value(function(d) { 
+                //console.log(d[1]);
+                return d[1]; });
+
+            //定义画布 define svg
+            var svg3 = d3.select("body")
+                .append("svg")
+                .attr("width",width)
+                .attr("height",height)
+                .append("g")
+                .attr("transform","translate("+ width/2 +"," + height/2 +")");
+            
+            //装入数据
+            var data3 = [['first:female',145],['first:male',180],['second:female',106],['second:male',179],['third:female',196],['third:male',510],['crew:female',23],['crew:male',862]];
+            //append g elements (arc) 相当于给g元素添加类属性
+            var g3 = svg3.selectAll(".arc")
+                        .data(pie(data3))
+                        .enter().append("g")
+                        .attr("class","arc");
+            //给arc添加通道path-相当于填充颜色并且给与动作，pieTween函数就是产生动作的函数
+            g3.append("path")
+                .attr("d",arc)
+                .style("fill",function(d) {
+                    return color3(d.data[0]);
+                })
+                .transition()
+                .ease(d3.easeLinear)
+                .duration(2000)
+                .attrTween("d",pieTween);
+            //添加文字- 以圆为中心进行位置的寻找并且显示文字
+            g3.append("text")
+                .transition()
+                .ease(d3.easeLinear)
+                .duration(2000)
+                .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) +")"; })
+                .attr("dx",-40)
+                .attr("dy",".35em")
+                .text(function(d){ 
+                console.log(d);
+                return d.data[0]+"("+d.data[1]+")";});
+            //产生动画效果部分
+            function pieTween(b){
+                b.innerRadius = 0;
+                var i = d3.interpolate({startAngle:0,endAngle:0},b);
+                return function(t) {return arc(i(t));};
+	        }
+
+            //第二张图
+            var color4 = d3.scaleOrdinal()
+                .range(["#FFAA33","#FF8800","#EE7700","#CC6600","#5599FF","#0066FF","#0044BB","#003C9D"]);
+
+                        //定义画布 define svg
+            var svg4 = d3.select("body")
+                .append("svg")
+                .attr("width",width)
+                .attr("height",height)
+                .append("g")
+                .attr("transform","translate("+ width/2 +"," + height/2 +")");
+            
+            //装入数据
+            var data4 = [['female:first',145],['female:second',106],['female:third',196],['female:crew',23],['male:first',180],['male:second',179],['male:third',510],['male:crew',862]];
+            //append g elements (arc) 相当于给g元素添加类属性
+            var g4 = svg4.selectAll(".arc")
+                        .data(pie(data4))
+                        .enter().append("g")
+                        .attr("class","arc");
+            //给arc添加通道path-相当于填充颜色并且给与动作，pieTween函数就是产生动作的函数
+            g4.append("path")
+                .attr("d",arc)
+                .style("fill",function(d) {
+                    return color4(d.data[0]);
+                })
+                .transition()
+                .ease(d3.easeLinear)
+                .duration(2000)
+                .attrTween("d",pieTween);
+            //添加文字- 以圆为中心进行位置的寻找并且显示文字
+            g4.append("text")
+                .transition()
+                .ease(d3.easeLinear)
+                .duration(2000)
+                .attr("transform", function(d) { return "translate(" + labelArc.centroid(d) +")"; })
+                .attr("dx",-40)
+                .attr("dy",".35em")
+                .text(function(d){ 
+                console.log(d);
+                return d.data[0]+"("+d.data[1]+")";});
+
+        </script>
+    </body>
+
+</html>

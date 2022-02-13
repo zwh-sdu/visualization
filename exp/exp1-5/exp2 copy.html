@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style_exp2.css">
+    <title>Document</title>
+</head>
+<style>
+    .axis path,
+    .axis line{
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+    
+    .axis text {
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+    .axis1 text {
+        font-family: sans-serif;
+        font-size: 18px;
+    }
+  </style>
+<body>  
+    <h1>Monthly Hours of Sunshine in Major U.S. Cities</h1>
+        <div id="legend"></div>
+        <div id="map"></div>
+        <div id="tooltip"></div>
+        
+        
+        <svg width="1160" height="600"></svg>
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="https://d3js.org/topojson.v2.min.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded',function(){
+                req=new XMLHttpRequest();
+                req.open("GET",'https://raw.githubusercontent.com/no-stack-dub-sack/testable-projects-fcc/master/src/data/choropleth_map/for_user_education.json',true);
+                req.send();
+                req.onload=function(){
+                json=JSON.parse(req.responseText);
+            
+                var svg = d3.select("svg");
+                var path = d3.geoPath();
+            
+            d3.json("https://raw.githubusercontent.com/no-stack-dub-sack/testable-projects-fcc/master/src/data/choropleth_map/counties.json", function(error, us) {
+                if (error) throw error;  
+                
+            //绘制美国地图
+            svg.append("g")
+                .attr("class", "county")
+                .selectAll("path")
+                .data(topojson.feature(us, us.objects.counties).features)
+                .enter().append("path")
+                .attr("d", path)
+                .style('fill', (d) => {
+                            return ("rgba(12, 81, 0, .3)")
+                        }//end for loop that checks for matching county IDs
+                    //end of loop through ALL json data
+                )//end style - fill
+                
+            //绘制美国边界
+            svg.append("path")
+                .attr("class", "county-borders")
+                .attr("d", path(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b; })));
+            //绘制各州边界
+            svg.append("path")
+                .attr("class", "state-borders")
+                .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
+
+
+	
+  });
+  }})
+</script>
+</body>
+</html>

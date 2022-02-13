@@ -1,0 +1,155 @@
+<html>
+<head>
+<meta charset="UTF-8"/>
+<script src="http://d3js.org/d3.v4.min.js"></script>
+</head>
+<body>
+<script>
+var size = 180;
+var padding = 20;
+
+var data = []
+for(i=0;i<145;i++){
+data.push({class:"first",sex:"female"});
+}
+for(i=0;i<180;i++){
+data.push({class:"first",sex:"male"});
+}
+for(i=0;i<106;i++){
+data.push({class:"second",sex:"female"});
+}
+for(i=0;i<179;i++){
+data.push({class:"second",sex:"male"});
+}
+for(i=0;i<196;i++){
+data.push({class:"third",sex:"female"});
+}
+for(i=0;i<510;i++){
+data.push({class:"third",sex:"male"});
+}
+for(i=0;i<23;i++){
+data.push({class:"crew",sex:"female"});
+}
+for(i=0;i<862;i++){
+data.push({class:"crew",sex:"male"});
+}
+
+d3.csv("https://gist.githubusercontent.com/mbostock/b038321e2a8177baf9e6a547195da966/raw/6c8eb7f5c644be0394f7fc384e42de9fab41927f/iris.csv",function(error,data1){
+	console.log(data1);
+    console.log(data)
+	
+	var columns = data.columns.filter(d => d!= "species");
+    // var columns = ["class","sex"]
+	console.log(columns);
+	
+	var svg = d3.select("body")
+				.append("svg")
+				.attr("width",size*columns.length+padding)
+				.attr("height",size*columns.length+padding)
+				.append("g")
+				.attr("transform","translate("+padding+",0)");
+	
+	//x轴比例尺
+	var xScale = columns.map(c => d3.scaleLinear()
+									.domain(d3.extent(data,d => d[c]))
+									.range([padding/2,size-padding/2]));
+	
+	//y轴比例尺
+	var yScale = columns.map(c => d3.scaleLinear()
+						.domain(d3.extent(data,d => d[c]))
+						.range([size-padding/2,padding/2]));
+	
+	//x坐标轴
+	var xAxis = d3.axisBottom()
+				  .ticks(6)
+				  .tickSize(size*columns.length);
+	
+	var x = svg.append("g")
+			   .selectAll("g")
+			   .data(xScale)
+			   .enter()
+			   .append("g")
+			   .attr("transform",(d,i) => "translate("+size*i+",0)")
+			   .each(function(d){
+					return d3.select(this).call(xAxis.scale(d));
+				});
+	
+	x.select(".domain").remove();
+	x.selectAll(".tick line").attr("stroke","#ddd");
+	
+	//y坐标轴
+	var yAxis = d3.axisLeft()
+				  .ticks(6)
+				  .tickSize(-size*columns.length);
+	
+	var y = svg.append("g")
+			   .selectAll("g")
+			   .data(yScale)
+			   .enter()
+			   .append("g")
+			   .attr("transform",(d,i) => "translate(0,"+size*i+")")
+			   .each(function(d){
+					return d3.select(this).call(yAxis.scale(d));
+				});
+				
+	y.select(".domain").remove();
+	y.selectAll(".tick line").attr("stroke","#ddd");
+	
+	//颜色比例尺
+	var colors = d3.scaleOrdinal()
+				   .domain(data.map(d => d.species))
+				   .range(d3.schemeCategory10);
+	
+	//为每个散点图单元分配一个组
+	var cell = svg.append("g")
+				  .selectAll("g")
+				  .data(d3.cross(d3.range(columns.length),d3.range(columns.length)))
+				  .enter()
+				  .append("g")
+				  .attr("transform",([i,j]) => "translate("+i*size+","+j*size+")");
+				  
+				  
+	
+	//绘制每个散点图的方格
+	cell.append("rect")
+		.attr("fill","none")
+		.attr("stroke","#aaa")
+		.attr("x",padding/2)
+		.attr("y",padding/2)
+		.attr("width",size-padding)
+		.attr("height",size-padding);
+	
+	//绘制散点
+	cell.each(function([i,j]){
+		d3.select(this)
+		  .selectAll("circle")
+		  .data(data)
+		  .enter()
+		  .append("circle")
+		  .attr("cx",d => xScale[i](d[columns[i]]))
+		  .attr("cy",d => yScale[j](d[columns[j]]))
+		  .attr("r",3.5)
+		  .attr("fill-opacity",0.7)
+		  .attr("fill",d => colors(d.species));
+	});
+	
+	//加标注
+	svg.append("g")
+	   .style("font","bold 10px sans-serif")
+	   .selectAll("text")
+	   .data(columns)
+	   .enter()
+	   .append("text")
+	   .attr("transform",(d,i) => "translate("+i*size+","+i*size+")")
+	   .attr("x",padding)
+	   .attr("y",padding)
+	   .attr("dy",".71em")
+	   .text(d => d);
+	   
+});
+
+</script>
+</body>
+
+
+</html>

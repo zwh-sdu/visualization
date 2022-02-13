@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>parsets</title>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script> 
+<script type="text/javascript" src="d3.parsets.js"></script>
+</head>
+<style type="text/css">
+  @import"d3.parsets.css";
+</style>
+<body>
+<script>
+    var svg2 = d3.select('body')
+                .append('svg')
+                .attr('width',800)
+                .attr('height',800)
+    var dataset3 = [[180,132],[31,12]]
+    for(i=0;i<145;i++){
+      dataset3.push(["first","female"]);
+    }
+    for(i=0;i<180;i++){
+      dataset3.push(["first","male"]);
+    }
+    for(i=0;i<106;i++){
+      dataset3.push(["second","female"]);
+    }
+    for(i=0;i<179;i++){
+      dataset3.push(["second","male"]);
+    }
+    for(i=0;i<196;i++){
+      dataset3.push(["third","female"]);
+    }
+    for(i=0;i<510;i++){
+      dataset3.push(["third","male"]);
+    }
+    for(i=0;i<23;i++){
+      dataset3.push(["crew","female"]);
+    }
+    for(i=0;i<862;i++){
+      dataset3.push(["crew","male"]);
+    }
+    var chart = d3.parsets()
+                .width(600)
+                .tension(0.5)
+                //.dimensions(["class","sex"])
+    svg2.datum(dataset3).call(chart)
+</script>
+</body>
+</html>

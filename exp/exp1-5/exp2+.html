@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+    <html> 
+      <head> 
+            <meta charset="utf-8"> 
+            <script src="http://d3js.org/d3.v3.js" charset="utf-8"></script> 
+            <title>可视化实验1</title>
+      </head>
+      <style>
+        .axis path,
+        .axis line{
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+        
+        .axis text {
+            font-family: sans-serif;
+            font-size: 18px;
+        }
+      </style>
+      <body>
+        <script>
+          //设置画布
+          var width = 800
+          var height = 450
+          var svg1 = d3.select('body')
+                      .append('svg')
+                      .attr('width',width)
+                      .attr('height',height)
+          //设置柱形图数据集
+          var dataset1 = [180,179,510,862]//柱形图数据集
+          var dataset2 = [145,106,196,23]
+          var maxx = d3.max(dataset1)
+
+          //柱状图比例尺
+          var linear = d3.scale.log().range([0,300]).domain([0.1,900])
+          //x轴的比例尺
+          var xScale = d3.scale.ordinal()
+              .domain(['0','first','second','third','crew'])
+              .range([60,130,210,290,370,450])
+          //y轴的比例尺
+          var yScale = d3.scale.log().base(2)
+              .domain([0.1,900])
+              .range([300, 0]);
+          //定义x轴
+          var xAxis = d3.svg.axis()
+              .scale(xScale)
+              .orient("bottom")
+          //定义y轴
+          var yAxis = d3.svg.axis().tickFormat(d3.format("d"))
+              .scale(yScale)
+              .orient("left");
+          //添加x轴
+          svg1.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + 0 + "," + (height-30) + ")")
+            .call(xAxis); 
+          //添加y轴
+          svg1.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + 60 + "," + 120 + ")")
+            .call(yAxis);
+
+          //设置柱形图元素
+          var rectWidth =30
+          var rec1 = svg1.selectAll("rect1")
+                          .data(dataset1)
+                          .enter()//选中只有数据没有元素的部分
+                          .append('rect')//由于没有元素所以要添加元素
+                          .attr('fill','steelblue')//设置颜色
+                          .attr('x',(d,i)=>i*(rectWidth + 50)+100)//设置横坐标,+3是设置柱形图之间的间隙
+                          .attr('y',(d)=>height-linear(d)-30)//反转
+                          .attr('width',rectWidth)
+                          .attr('height',function(d){return linear(d);})
+        var rec2 = svg1.selectAll("rect2")
+                          .data(dataset2)
+                          .enter()//选中只有数据没有元素的部分
+                          .append('rect')//由于没有元素所以要添加元素
+                          .attr('fill','red')//设置颜色
+                          .attr('x',(d,i)=>i*(rectWidth + 50)+130)//设置横坐标,+3是设置柱形图之间的间隙
+                          .attr('y',(d)=>height-linear(d)-30)//反转
+                          .attr('width',rectWidth)
+                          .attr('height',(d)=>linear(d))
+            var text1 = svg1.selectAll("t1")
+                .data(dataset1)
+                .enter()
+                .append("text")
+                .attr("transform","translate(" + 0 + "," + -20 + ")")
+                .attr("x", (d,i)=>i*(rectWidth+50)+90 )
+                .attr("y",function(d){
+                    return height-linear(d)-30;
+                })
+                .attr("dx",function(){
+                    return 10;
+                })
+                .attr("dy",function(d){
+                    return 20;
+                })
+                .text(function(d){
+                    return d;
+                })		
+            var text2 = svg1.selectAll("t2")
+                  .data(dataset2)
+                  .enter()
+                  .append("text")
+                  .attr("transform","translate(" + 30 + "," + -20 + ")")
+                  .attr("x", (d,i)=>i*(rectWidth+50)+90 )
+                  .attr("y",function(d){
+                      return height-linear(d)-30;
+                  })
+                  .attr("dx",function(){
+                      return 10;
+                  })
+                  .attr("dy",function(d){
+                      return 20;
+                  })
+                  .text(function(d){
+                      return d;
+                  })	
+        </script>

@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style_exp2.css">
+    <title>Document</title>
+</head>
+<style>
+    .axis path,
+    .axis line{
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+    
+    .axis text {
+        font-family: sans-serif;
+        font-size: 12px;
+    }
+    .axis1 text {
+        font-family: sans-serif;
+        font-size: 18px;
+    }
+  </style>
+<body>  
+    <h1>Monthly Hours of Sunshine in Major U.S. Cities</h1>
+        <div id="legend"></div>
+        <div id="map"></div>
+        <div id="tooltip"></div>
+        
+        
+        <svg width="1160" height="600"></svg>
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+        <script src="https://d3js.org/topojson.v2.min.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded',function(){
+                req=new XMLHttpRequest();
+                req.open("GET",'https://raw.githubusercontent.com/no-stack-dub-sack/testable-projects-fcc/master/src/data/choropleth_map/for_user_education.json',true);
+                req.send();
+                req.onload=function(){
+                json=JSON.parse(req.responseText);
+            
+                var svg = d3.select("svg");
+                var path = d3.geoPath();
+            
+            d3.json("https://raw.githubusercontent.com/no-stack-dub-sack/testable-projects-fcc/master/src/data/choropleth_map/counties.json", function(error, us) {
+                if (error) throw error;  
+                
+            //绘制美国地图
+            svg.append("g")
+                .attr("class", "county")
+                .selectAll("path")
+                .data(topojson.feature(us, us.objects.counties).features)
+                .enter().append("path")
+                .attr("d", path)
+                .style('fill', (d) => {
+                            return ("rgba(12, 81, 0, .3)")
+                        }//end for loop that checks for matching county IDs
+                    //end of loop through ALL json data
+                )//end style - fill
+                
+            //绘制美国边界
+            svg.append("path")
+                .attr("class", "county-borders")
+                .attr("d", path(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b; })));
+            //绘制各州边界
+            svg.append("path")
+                .attr("class", "state-borders")
+                .attr("d", path(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; })));
+
+
+            //标识出六个城市的位置   
+            //Chicago 
+            svg.append('circle')
+                .attr('cx',625)
+                .attr('cy',220)
+                .attr('r',8)
+                .attr('fill',"orange")
+            svg.append('text')
+                .attr('x',600)
+                .attr('y',210)
+                .text("Chicago")
+            //Houston
+            svg.append('circle')
+                .attr('cx',500)
+                .attr('cy',500)
+                .attr('r',8)
+                .attr('fill',"orange")
+            svg.append('text')
+                .attr('x',475)
+                .attr('y',490)
+                .text("Houston")
+            //Miami
+            svg.append('circle')
+                .attr('cx',810)
+                .attr('cy',560)
+                .attr('r',8)
+                .attr('fill',"orange")
+            svg.append('text')
+                .attr('x',785)
+                .attr('y',550)
+                .text("Miami")
+            //New York
+            svg.append('circle')
+                .attr('cx',860)
+                .attr('cy',205)
+                .attr('r',8)
+                .attr('fill',"orange")
+            svg.append('text')
+                .attr('x',835)
+                .attr('y',195)
+                .text("New York")
+            //San Francisco
+            svg.append('circle')
+                .attr('cx',30)
+                .attr('cy',260)
+                .attr('r',8)
+                .attr('fill',"orange")
+            svg.append('text')
+                .attr('x',5)
+                .attr('y',250)
+                .text("San Francisco")
+            //Seattle
+            svg.append('circle')
+                .attr('cx',95)
+                .attr('cy',45)
+                .attr('r',8)
+                .attr('fill',"orange")
+            svg.append('text')
+                .attr('x',70)
+                .attr('y',35)
+                .text("Seattle")
+
+
+            var dataset1 = [135,136,187,215,281,311,318,283,226,193,113,106]
+            var dataset2 = [144,141,193,212,266,298,294,281,238,239,181,146]
+            var dataset3 = [222,227,266,275,280,251,267,263,216,215,212,209]
+            var dataset4 = [154,171,213,237,268,289,302,271,235,213,169,155]
+            var dataset5 = [165,182,251,281,314,330,300,272,267,243,189,156]
+            var dataset6 = [69,108,178,207,253,268,312,281,221,142,72,52]
+            var maxx = 330
+
+            var dx1 = 450
+            var dy1 = -250
+            var dx2 = 330
+            var dy2 = 30
+            var dx3 = 630
+            var dy3 = 90
+            var dx4 = 700
+            var dy4 = -260
+            var dx5 = -30
+            var dy5 = 10
+            var dx6 = -30
+            var dy6 = -250
+
+            var rectWidth = 8
+            //柱状图比例尺
+            var linear = d3.scaleLinear().domain([0, maxx]).range([0,150])
+            //x轴的比例尺
+            var xScale = d3.scaleOrdinal()
+            .domain(["",1,2,3,4,5,6,7,8,9,10,11,12])
+            .range([60,74,92,110,128,146,164,182,200,218,236,254,272])
+            //y轴的比例尺
+            var yScale = d3.scaleLinear()
+            .domain([0,maxx])
+            .range([150, 0]);
+            //定义x轴
+            var xAxis = d3.axisBottom()
+            .scale(xScale)
+            //定义y轴
+            var yAxis = d3.axisLeft()
+            .scale(yScale)
+
+//Chicago
+            //添加x轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + dx1 + "," + (420+dy1) + ")")
+            .call(xAxis); 
+            //添加y轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + (60+dx1) + "," + (270+dy1) + ")")
+            .call(yAxis);
+
+            //设置柱形图元素
+
+            var rec1 = svg.selectAll("rect1")
+                .data(dataset1)
+                .enter()//选中只有数据没有元素的部分
+                .append('rect')//由于没有元素所以要添加元素
+                .attr('fill','steelblue')//设置颜色
+                .attr('x',(d,i)=>i*(rectWidth+10)+70+dx1)//设置横坐标,+3是设置柱形图之间的间隙
+                .attr('y',(d)=>420-linear(d)+dy1)//反转
+                .attr('width',rectWidth)
+                .attr('height',(d)=>linear(d))
+            //添加文字元素
+            var text1 = svg.selectAll("t1")
+                        .data(dataset1)
+                        .enter()
+                        .append("text")
+                        .attr("font-size",10)
+                        .attr("transform","translate(" + dx1 + "," + (dy1-20) + ")")
+                        .attr("x", (d,i)=>i*(rectWidth+10)+65)
+                        .attr("y",function(d){
+                        return 420-linear(d);
+                        })
+                        .attr("dx",function(){
+                        return 0;
+                        })
+                        .attr("dy",function(d){
+                        return 20;
+                        })
+                        .text(function(d){
+                        return d;
+                        })		
+//Houston
+            //添加x轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + dx2 + "," + (420+dy2) + ")")
+            .call(xAxis); 
+            //添加y轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + (60+dx2) + "," + (270+dy2) + ")")
+            .call(yAxis);
+
+            //设置柱形图元素
+
+            var rec2 = svg.selectAll("rect2")
+                .data(dataset2)
+                .enter()//选中只有数据没有元素的部分
+                .append('rect')//由于没有元素所以要添加元素
+                .attr('fill','steelblue')//设置颜色
+                .attr('x',(d,i)=>i*(rectWidth+10)+70+dx2)//设置横坐标,+3是设置柱形图之间的间隙
+                .attr('y',(d)=>420-linear(d)+dy2)//反转
+                .attr('width',rectWidth)
+                .attr('height',(d)=>linear(d))
+            //添加文字元素
+            var text2 = svg.selectAll("t2")
+                        .data(dataset2)
+                        .enter()
+                        .append("text")
+                        .attr("font-size",10)
+                        .attr("transform","translate(" + dx2 + "," + (dy2-20) + ")")
+                        .attr("x", (d,i)=>i*(rectWidth+10)+65)
+                        .attr("y",function(d){
+                        return 420-linear(d);
+                        })
+                        .attr("dx",function(){
+                        return 0;
+                        })
+                        .attr("dy",function(d){
+                        return 20;
+                        })
+                        .text(function(d){
+                        return d;
+                        })		
+//Miami
+            //添加x轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + dx3 + "," + (420+dy3) + ")")
+            .call(xAxis); 
+            //添加y轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + (60+dx3) + "," + (270+dy3) + ")")
+            .call(yAxis);
+
+            //设置柱形图元素
+
+            var rec3 = svg.selectAll("rect3")
+                .data(dataset3)
+                .enter()//选中只有数据没有元素的部分
+                .append('rect')//由于没有元素所以要添加元素
+                .attr('fill','steelblue')//设置颜色
+                .attr('x',(d,i)=>i*(rectWidth+10)+70+dx3)//设置横坐标,+3是设置柱形图之间的间隙
+                .attr('y',(d)=>420-linear(d)+dy3)//反转
+                .attr('width',rectWidth)
+                .attr('height',(d)=>linear(d))
+            //添加文字元素
+            var text3 = svg.selectAll("t3")
+                        .data(dataset3)
+                        .enter()
+                        .append("text")
+                        .attr("font-size",10)
+                        .attr("transform","translate(" + dx3 + "," + (dy3-20) + ")")
+                        .attr("x", (d,i)=>i*(rectWidth+10)+65)
+                        .attr("y",function(d){
+                        return 420-linear(d);
+                        })
+                        .attr("dx",function(){
+                        return 0;
+                        })
+                        .attr("dy",function(d){
+                        return 20;
+                        })
+                        .text(function(d){
+                        return d;
+                        })		
+//New York
+            //添加x轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + dx4 + "," + (420+dy4) + ")")
+            .call(xAxis); 
+            //添加y轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + (60+dx4) + "," + (270+dy4) + ")")
+            .call(yAxis);
+
+            //设置柱形图元素
+
+            var rec4 = svg.selectAll("rect4")
+                .data(dataset4)
+                .enter()//选中只有数据没有元素的部分
+                .append('rect')//由于没有元素所以要添加元素
+                .attr('fill','steelblue')//设置颜色
+                .attr('x',(d,i)=>i*(rectWidth+10)+70+dx4)//设置横坐标,+4是设置柱形图之间的间隙
+                .attr('y',(d)=>420-linear(d)+dy4)//反转
+                .attr('width',rectWidth)
+                .attr('height',(d)=>linear(d))
+            //添加文字元素
+            var text4 = svg.selectAll("t4")
+                        .data(dataset4)
+                        .enter()
+                        .append("text")
+                        .attr("font-size",10)
+                        .attr("transform","translate(" + dx4 + "," + (dy4-20) + ")")
+                        .attr("x", (d,i)=>i*(rectWidth+10)+65)
+                        .attr("y",function(d){
+                        return 420-linear(d);
+                        })
+                        .attr("dx",function(){
+                        return 0;
+                        })
+                        .attr("dy",function(d){
+                        return 20;
+                        })
+                        .text(function(d){
+                        return d;
+                        })		
+//San Francisco
+            //添加x轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + dx5 + "," + (420+dy5) + ")")
+            .call(xAxis); 
+            //添加y轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + (60+dx5) + "," + (270+dy5) + ")")
+            .call(yAxis);
+
+            //设置柱形图元素
+
+            var rec5 = svg.selectAll("rect5")
+                .data(dataset5)
+                .enter()//选中只有数据没有元素的部分
+                .append('rect')//由于没有元素所以要添加元素
+                .attr('fill','steelblue')//设置颜色
+                .attr('x',(d,i)=>i*(rectWidth+10)+70+dx5)//设置横坐标,+3是设置柱形图之间的间隙
+                .attr('y',(d)=>420-linear(d)+dy5)//反转
+                .attr('width',rectWidth)
+                .attr('height',(d)=>linear(d))
+            //添加文字元素
+            var text5 = svg.selectAll("t5")
+                        .data(dataset5)
+                        .enter()
+                        .append("text")
+                        .attr("font-size",10)
+                        .attr("transform","translate(" + dx5 + "," + (dy5-20) + ")")
+                        .attr("x", (d,i)=>i*(rectWidth+10)+65)
+                        .attr("y",function(d){
+                        return 420-linear(d);
+                        })
+                        .attr("dx",function(){
+                        return 0;
+                        })
+                        .attr("dy",function(d){
+                        return 20;
+                        })
+                        .text(function(d){
+                        return d;
+                        })		
+//Seattle
+            //添加x轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + dx6 + "," + (420+dy6) + ")")
+            .call(xAxis); 
+            //添加y轴
+            svg.append("g")
+            .attr("class","axis")
+            .attr("transform","translate(" + (60+dx6) + "," + (270+dy6) + ")")
+            .call(yAxis);
+
+            //设置柱形图元素
+
+            var rec6 = svg.selectAll("rect6")
+                .data(dataset6)
+                .enter()//选中只有数据没有元素的部分
+                .append('rect')//由于没有元素所以要添加元素
+                .attr('fill','steelblue')//设置颜色
+                .attr('x',(d,i)=>i*(rectWidth+10)+70+dx6)//设置横坐标,+3是设置柱形图之间的间隙
+                .attr('y',(d)=>420-linear(d)+dy6)//反转
+                .attr('width',rectWidth)
+                .attr('height',(d)=>linear(d))
+            //添加文字元素
+            var text6 = svg.selectAll("t6")
+                        .data(dataset6)
+                        .enter()
+                        .append("text")
+                        .attr("font-size",10)
+                        .attr("transform","translate(" + dx6 + "," + (dy6-20) + ")")
+                        .attr("x", (d,i)=>i*(rectWidth+10)+65)
+                        .attr("y",function(d){
+                        return 420-linear(d);
+                        })
+                        .attr("dx",function(){
+                        return 0;
+                        })
+                        .attr("dy",function(d){
+                        return 20;
+                        })
+                        .text(function(d){
+                        return d;
+                        })		
+  });
+  }})
+</script>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<script>
+    //设置画布
+    var width = 1200
+    var height = 450
+    var svg1 = d3.select('body')
+                .append('svg')
+                .attr('width',width)
+                .attr('height',height)
+    //设置柱形图数据集
+    var dataset1 = [135,136,187,215,281,311,318,283,226,193,113,106]
+    var dataset2 = [144,141,193,212,266,298,294,281,238,239,181,146]
+    var dataset3 = [222,227,266,275,280,251,267,263,216,215,212,209]
+    var dataset4 = [154,171,213,237,268,289,302,271,235,213,169,155]
+    var dataset5 = [165,182,251,281,314,330,300,272,267,243,189,156]
+    var dataset6 = [69,108,178,207,253,268,312,281,221,142,72,52]
+    var maxx = 330
+
+    //柱状图比例尺
+    var linear = d3.scaleLinear().domain([0, maxx]).range([0,400])
+    //x轴的比例尺
+    var xScale = d3.scaleOrdinal()
+        .domain(['0','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sept','Oct','Nov','Dec'])
+        .range([40,80,172,264,356,448,540,632,724,816,908,1000,1092])
+    //y轴的比例尺
+    var yScale = d3.scaleLinear()
+        .domain([0,maxx])
+        .range([400, 0]);
+    //定义x轴
+    var xAxis = d3.axisBottom()
+        .scale(xScale)
+    //定义y轴
+    var yAxis = d3.axisLeft()
+        .scale(yScale)
+    //添加x轴
+    svg1.append("g")
+      .attr("class","axis1")
+      .attr("transform","translate(" + 0 + "," + (height-30) + ")")
+      .call(xAxis); 
+    //添加y轴
+    svg1.append("g")
+      .attr("class","axis1")
+      .attr("transform","translate(" + 40 + "," + 20 + ")")
+      .call(yAxis);
+
+    //设置柱形图元素
+    var rectWidth = 12
+    var rec1 = svg1.selectAll("rect1")
+                    .data(dataset1)
+                    .enter()//选中只有数据没有元素的部分
+                    .append('rect')//由于没有元素所以要添加元素
+                    .attr('fill','#c23531')//设置颜色
+                    .attr('x',(d,i)=>i*(rectWidth + 80)+50)//设置横坐标,+3是设置柱形图之间的间隙
+                    .attr('y',(d)=>height-linear(d)-30)//反转
+                    .attr('width',rectWidth)
+                    .attr('height',(d)=>linear(d))
+    var rec2 = svg1.selectAll("rect2")
+                    .data(dataset2)
+                    .enter()//选中只有数据没有元素的部分
+                    .append('rect')//由于没有元素所以要添加元素
+                    .attr('fill','#2f4554')//设置颜色
+                    .attr('x',(d,i)=>i*(rectWidth + 80)+62)//设置横坐标,+3是设置柱形图之间的间隙
+                    .attr('y',(d)=>height-linear(d)-30)//反转
+                    .attr('width',rectWidth)
+                    .attr('height',(d)=>linear(d))
+    var rec3 = svg1.selectAll("rect3")
+                    .data(dataset3)
+                    .enter()//选中只有数据没有元素的部分
+                    .append('rect')//由于没有元素所以要添加元素
+                    .attr('fill','#61a0a8')//设置颜色
+                    .attr('x',(d,i)=>i*(rectWidth + 80)+74)//设置横坐标,+3是设置柱形图之间的间隙
+                    .attr('y',(d)=>height-linear(d)-30)//反转
+                    .attr('width',rectWidth)
+                    .attr('height',(d)=>linear(d))
+    var rec4 = svg1.selectAll("rect4")
+                    .data(dataset4)
+                    .enter()//选中只有数据没有元素的部分
+                    .append('rect')//由于没有元素所以要添加元素
+                    .attr('fill','#d48265')//设置颜色
+                    .attr('x',(d,i)=>i*(rectWidth + 80)+86)//设置横坐标,+3是设置柱形图之间的间隙
+                    .attr('y',(d)=>height-linear(d)-30)//反转
+                    .attr('width',rectWidth)
+                    .attr('height',(d)=>linear(d))
+    var rec5 = svg1.selectAll("rect5")
+                    .data(dataset5)
+                    .enter()//选中只有数据没有元素的部分
+                    .append('rect')//由于没有元素所以要添加元素
+                    .attr('fill','#91c7ae')//设置颜色
+                    .attr('x',(d,i)=>i*(rectWidth + 80)+98)//设置横坐标,+3是设置柱形图之间的间隙
+                    .attr('y',(d)=>height-linear(d)-30)//反转
+                    .attr('width',rectWidth)
+                    .attr('height',(d)=>linear(d))
+    var rec6 = svg1.selectAll("rect6")
+                    .data(dataset6)
+                    .enter()//选中只有数据没有元素的部分
+                    .append('rect')//由于没有元素所以要添加元素
+                    .attr('fill','#749f83')//设置颜色
+                    .attr('x',(d,i)=>i*(rectWidth + 80)+110)//设置横坐标,+3是设置柱形图之间的间隙
+                    .attr('y',(d)=>height-linear(d)-30)//反转
+                    .attr('width',rectWidth)
+                    .attr('height',(d)=>linear(d))
+  //注释
+//Chicago
+  svg1.append("rect")
+          .attr("x",980)
+          .attr("y",0)
+          .attr("width",15)
+          .attr("height",15)
+          .attr("fill","#c23531")
+    svg1.append("g")
+          .append('text')
+          .attr("x",1010)
+          .attr("y",14)
+          .style('font-weight', 800)
+          .style('font-family', 'Arial')
+          .style('fill', 'black')
+          .text("Chicago")
+//Houston
+  svg1.append("rect")
+          .attr("x",980)
+          .attr("y",20)
+          .attr("width",15)
+          .attr("height",15)
+          .attr("fill","#2f4554")
+  svg1.append("g")
+          .append('text')
+          .attr("x",1010)
+          .attr("y",34)
+          .style('font-weight', 800)
+          .style('font-family', 'Arial')
+          .style('fill', 'black')
+          .text("Houston")
+//Miami
+svg1.append("rect")
+          .attr("x",980)
+          .attr("y",40)
+          .attr("width",15)
+          .attr("height",15)
+          .attr("fill","#61a0a8")
+  svg1.append("g")
+          .append('text')
+          .attr("x",1010)
+          .attr("y",54)
+          .style('font-weight', 800)
+          .style('font-family', 'Arial')
+          .style('fill', 'black')
+          .text("Miami")
+//New York
+  svg1.append("g")
+          .append('text')
+          .attr("x",1010)
+          .attr("y",74)
+          .style('font-weight', 800)
+          .style('font-family', 'Arial')
+          .style('fill', 'black')
+          .text("New York")
+    svg1.append("rect")
+          .attr("x",980)
+          .attr("y",60)
+          .attr("width",15)
+          .attr("height",15)
+          .attr("fill","#d48265")
+//San Francisco
+svg1.append("rect")
+          .attr("x",980)
+          .attr("y",80)
+          .attr("width",15)
+          .attr("height",15)
+          .attr("fill","#91c7ae")
+        svg1.append("g")
+          .append('text')
+          .attr("x",1010)
+          .attr("y",94)
+          .style('font-weight', 800)
+          .style('font-family', 'Arial')
+          .style('fill', 'black')
+          .text("San Francisco")
+//Seattle
+  svg1.append("g")
+          .append('text')
+          .attr("x",1010)
+          .attr("y",114)
+          .style('font-weight', 800)
+          .style('font-family', 'Arial')
+          .style('fill', 'black')
+          .text("Seattle")
+  svg1.append("rect")
+          .attr("x",980)
+          .attr("y",100)
+          .attr("width",15)
+          .attr("height",15)
+          .attr("fill","#749f83")
+  </script>
+</body>
+</html>
